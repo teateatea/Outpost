@@ -1,18 +1,30 @@
    # BAR127PROC CREATES BARS
    # This procedure takes any integer x (up to 127) and returns x bars.
    # <proc[Bar127Proc].context[<x>]>
+   # For integers greater than 127, please use Bar255Proc.
 
 "Bar127Proc":
   type: procedure
   debug: false
   script:
+  # Save "PermanentBarCount" as the original integer provided.
+  # Save "BarCount" as the original integer as well. This will be our working definition.
     - define PermanentBarCount <def[1]>
     - define BarCount <def[PermanentBarCount]>
+  # - IF "Barcount" is GREATER THAN OR EQUAL TO 64,
+  #   - Save "Bars" as "64 Pipes"
+  #   - Subtract 64 from "BarCount"
   # 64 ----- ----- -----
     - ^if <def[BarCount]> >= 64 {
       - ^define Bars ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
       - ^define BarCount <def[BarCount].sub[64].round>
     }
+  # - IF "BarCount" is GREATER THAN OR EQUAL TO 32,
+  #   - IF "PermanentBarCount" is GREATER THAN OR EQUAL TO 64,
+  #     - Save "Bars" as "All previous pipes plus 32 more pipes"
+  #   - ELSE,
+  #     - Save "Bars" as "32 Pipes"
+  #   - Subtract 32 from "BarCount"
   # 32 ----- ----- -----
     - ^if <def[BarCount]> >= 32 {
       - ^if <def[PermanentBarCount]> >= 64 {
@@ -23,6 +35,7 @@
           }      
       - ^define BarCount <def[BarCount].sub[32].round>
     }
+  # Same as above.
   # 16 ----- ----- -----
     - ^if <def[BarCount]> >= 16 {
       - ^if <def[PermanentBarCount]> >= 32 {
@@ -33,6 +46,8 @@
           }      
       - ^define BarCount <def[BarCount].sub[16].round>
     }
+
+  # Same as above.
   # 8 ----- ----- -----
     - ^if <def[BarCount]> >= 8 {
       - ^if <def[PermanentBarCount]> >= 16 {
@@ -43,6 +58,8 @@
           }      
       - ^define BarCount <def[BarCount].sub[8].round>
     }
+
+  # Same as above.
   # 4 ----- ----- -----
     - ^if <def[BarCount]> >= 4 {
       - ^if <def[PermanentBarCount]> >= 8 {
@@ -53,6 +70,7 @@
           }      
       - ^define BarCount <def[BarCount].sub[4].round>
     }
+  # Same as above.
   # 2 ----- ----- -----
     - ^if <def[BarCount]> >= 2 {
       - ^if <def[PermanentBarCount]> >= 4 {
@@ -63,6 +81,7 @@
           }      
       - ^define BarCount <def[BarCount].sub[2].round>
     }
+  # Same as above.
   # 1 ----- ----- -----
     - ^if <def[BarCount]> >= 1 {
       - ^if <def[PermanentBarCount]> >= 2 {
@@ -72,4 +91,5 @@
           - ^define Bars |
           }      
     }
+  # Return "Bars"
     - determine <def[Bars]||>
