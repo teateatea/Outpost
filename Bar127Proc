@@ -1,0 +1,75 @@
+   # BAR127PROC CREATES BARS
+   # <proc[Bar127Proc].context[<1>]>
+   # <def[1]> is the number of bars, max of 127 bars
+
+"Bar127Proc":
+  type: procedure
+  debug: false
+  script:
+    - define PermanentBarCount <def[1]>
+    - define BarCount <def[PermanentBarCount]>
+  # 64 ----- ----- -----
+    - ^if <def[BarCount]> >= 64 {
+      - ^define Bars ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      - ^define BarCount <def[BarCount].sub[64].round>
+    }
+  # 32 ----- ----- -----
+    - ^if <def[BarCount]> >= 32 {
+      - ^if <def[PermanentBarCount]> >= 64 {
+        - ^define Bars <def[Bars]||>||||||||||||||||||||||||||||||||
+        }
+        else {
+          - ^define Bars ||||||||||||||||||||||||||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[32].round>
+    }
+  # 16 ----- ----- -----
+    - ^if <def[BarCount]> >= 16 {
+      - ^if <def[PermanentBarCount]> >= 32 {
+        - ^define Bars <def[Bars]||>||||||||||||||||
+        }
+        else {
+          - ^define Bars ||||||||||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[16].round>
+    }
+  # 8 ----- ----- -----
+    - ^if <def[BarCount]> >= 8 {
+      - ^if <def[PermanentBarCount]> >= 16 {
+        - ^define Bars <def[Bars]||>||||||||
+        }
+        else {
+          - ^define Bars ||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[8].round>
+    }
+  # 4 ----- ----- -----
+    - ^if <def[BarCount]> >= 4 {
+      - ^if <def[PermanentBarCount]> >= 8 {
+        - ^define Bars <def[Bars]||>||||
+        }
+        else {
+          - ^define Bars ||||
+          }      
+      - ^define BarCount <def[BarCount].sub[4].round>
+    }
+  # 2 ----- ----- -----
+    - ^if <def[BarCount]> >= 2 {
+      - ^if <def[PermanentBarCount]> >= 4 {
+        - ^define Bars <def[Bars]||>||
+        }
+        else {
+          - ^define Bars ||
+          }      
+      - ^define BarCount <def[BarCount].sub[2].round>
+    }
+  # 1 ----- ----- -----
+    - ^if <def[BarCount]> >= 1 {
+      - ^if <def[PermanentBarCount]> >= 2 {
+        - ^define Bars <def[Bars]||>|
+        }
+        else {
+          - ^define Bars |
+          }      
+    }
+    - determine <def[Bars]||>
