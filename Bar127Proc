@@ -1,6 +1,6 @@
    # BAR127PROC CREATES BARS
    # <proc[Bar127Proc].context[<1>]>
-   # <def[1]> is the number of bars, max of 127 bars
+   # <def[1]> is the number of bars, max of 128 bars
 
 "Bar127Proc":
   type: procedure
