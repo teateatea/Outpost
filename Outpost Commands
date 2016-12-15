@@ -827,14 +827,14 @@ TeaOutpost_PlayerCommand:
           - define CurrentColour <player.flag[RaceColour]||Gray>
           - define NationName <player.nation.replace[nation@].with[]||Nationless>
 
-          - ^narrate "" targets:<player>
+       #   - ^narrate "" targets:<player>
           - ^narrate "<gold><bold><&lb>OUTPOST<&rb> CHOOSE A TEAM" targets:<player>
           - define LastTeamSwitch <player.flag[LastTeamSwitch]||0>
           - define CurrentTime <server.current_time_millis.div[50].as_int>
           - define LastTeamSwitchPlusWeek <def[LastTeamSwitch].add[12096000]>
           - define RemainingTime <def[LastTeamSwitchPlusWeek].sub[<def[CurrentTime]>]>
           - if <def[LastTeamSwitch].add[12096000]> <= <def[CurrentTime]> {
-            - ^narrate "<gold>Weekly Free Team Switch Available!" targets:<player>
+            - ^narrate "<aqua><italic>Weekly Free Team Switch Available!" targets:<player>
             - define SwitchCost One<&sp>Free<&sp>Switch!
             }
             else {
@@ -845,32 +845,33 @@ TeaOutpost_PlayerCommand:
           - define NationDefault <server.flag[TeaOutpost_%NationName%DefaultColour]||null>
          #   }
           - if <def[NationDefault]||null> != null {
-            - ^narrate "<proc[msgHover].context[<gold> <&gt> |<gold>This line has clickable content!]><proc[msgCommand].context[<gold>Nation Default<&co> <%NationDefault%>%NationName%|outpost setteamcolour %NationDefault%|<gold>Switch back to your Nation: Always Free<&nl><%NationDefault%>%NationName% / %NationDefault%]>" targets:<player>
+            - ^narrate "<proc[msgCommand].context[<gold> <&gt> Nation Default<&co> <%NationDefault%>%NationName%|outpost setteamcolour %NationDefault%|<gold> <&gt> Switch back to your Nation: Always Free <&nl><%NationDefault%>%NationName% / %NationDefault%]>" targets:<player>
             }
             else {
-              - ^narrate "<proc[msgHover].context[<gold> <&gt> |<gold>This line has clickable content!]><proc[msgHover].context[<gold>Nation Default|<gold>Switch back to your Nation: Always Free<&nl><gray>No default colour has been set for<&co> %NationName%<&nl><dark_gray>Use /outpost report if this is an error.<&nl><dark_gray>Tea.Outpost.%NationName%.Default.Colour]>" targets:<player>
+              - ^narrate "<proc[msgHover].context[<gold> + Nation Default|<gold> Switch back to your Nation: Always Free <&nl><gray> No default colour has been set for<&co> %NationName% <&nl><dark_gray> Use /outpost report if this is an error. <&nl><dark_gray> Tea.Outpost.%NationName%.Default.Colour ]>" targets:<player>
               }
           - foreach <script.constant[colourlist]> {
             - if <server.flag[%value%NationName]||Wild> != Wild {
               - if %CurrentColour% == %value% {
-                - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setteamcolour %value%|<%value%>Confirm <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>]>" targets:<player>
+                - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setteamcolour %value%|<%value%> <&gt> Confirm <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild> ]>" targets:<player>
                 }
                 else {
-                  - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setteamcolour %value%|<%value%>Switch to <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild><&co> <def[SwitchCost]>]>" targets:<player>
+                  - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setteamcolour %value%|<%value%> <&gt> Switch to <server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild><&co> <def[SwitchCost]> ]>" targets:<player>
                   }
               }
             }
           - foreach <script.constant[colourlist]> {
             - if <server.flag[%value%NationName]||Wild> == Wild {
               - if %CurrentColour% == %value% {
-                - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <server.flag[%value%DisplayName]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setteamcolour %value%|<%value%>Confirm <server.flag[%value%DisplayName]||Wild>]>" targets:<player>
+                - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <server.flag[%value%DisplayName]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setteamcolour %value%|<%value%> <&gt> Confirm <server.flag[%value%DisplayName]||Wild> ]>" targets:<player>
                 }
                 else {
-                  - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <server.flag[%value%DisplayName]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setteamcolour %value%|<%value%>Switch to <server.flag[%value%DisplayName]||Wild><&co> <def[SwitchCost]>]>" targets:<player>
+                  - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <server.flag[%value%DisplayName]||Wild> / <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setteamcolour %value%|<%value%> <&gt> Switch to <server.flag[%value%DisplayName]||Wild><&co> <def[SwitchCost]> ]>" targets:<player>
                   }
               }
             }
-          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost player|<gold>Back to Player Options]>" targets:<player>
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost player|<gold> <&lt><&lt> Back to Player Options ]>" targets:<player>
+          - ^narrate "" targets:<player>
 
    ## SET COLOUR ---
         - case setteamcolour:
@@ -912,17 +913,18 @@ TeaOutpost_PlayerCommand:
    ## SHOW COLOUR ---
         - case playercolour:
           - define CurrentColour <player.flag[RaceColourSecondary]||Gray>
-          - ^narrate "" targets:<player>
-          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> SELECT PERSONAL COLOUR" targets:<player>
+        #  - ^narrate "" targets:<player>
+          - ^narrate "<gold><bold><&lb>OUTPOST<&rb> CHOOSE YOUR COLOUR" targets:<player>
           - foreach <script.constant[colourlist]> {
             - if %CurrentColour% == %value% {
-              - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setplayercolour %value%|<%value%>Confirm <def[value].as_list.first.replace[_].with[<&sp>]>]>" targets:<player>
+              - ^narrate "<proc[msgCommand].context[<%value%><bold> <&gt> <def[value].as_list.first.replace[_].with[<&sp>]> <&lt>|outpost setplayercolour %value%|<%value%> <&gt> Confirm <def[value].as_list.first.replace[_].with[<&sp>]> ]>" targets:<player>
               }
               else {
-                - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setplayercolour %value%|<%value%>Select <def[value].as_list.first.replace[_].with[<&sp>]><&co> FREE]>" targets:<player>
+                - ^narrate "<proc[msgCommand].context[<%value%> <&gt> <def[value].as_list.first.replace[_].with[<&sp>]>|outpost setplayercolour %value%|<%value%> <&gt> Select <def[value].as_list.first.replace[_].with[<&sp>]><&co> FREE ]>" targets:<player>
                 }
             }
-          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> Back|outpost player|<gold>Back to Player Options]>" targets:<player>
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> Back|outpost player|<gold> <&lt><&lt> Back to Player Options ]>" targets:<player>
+          - ^narrate "" targets:<player>
 
    ## SET COLOUR ---
         - case setplayercolour:
@@ -1476,12 +1478,13 @@ TeaOutpost_PlayerCommand:
        #   - ^narrate "" targets:<player>
 
           - ^narrate "<proc[msgCommand].context[<gold> <&gt> /outpost here|outpost here|<gold> <&gt> Click to view or edit local outpost information ]><dark_aqua> - View or edit local outpost information" targets:<player>
-          - ^narrate "" targets:<player>
+      #    - ^narrate "" targets:<player>
           - ^narrate "<proc[msgCommand].context[<yellow> <&gt> /outpost list|outpost list|<yellow> <&gt> Click to view all outpost names and owners ]><gray> - View all outpost names and owners" targets:<player>
        #   - ^narrate "" targets:<player>
 
           - ^narrate "<proc[msgCommand].context[<gold> <&gt> /outpost player|outpost player|<gold> <&gt> Click to view or edit player information ]><dark_aqua> - View or edit player information" targets:<player>
-          - ^narrate "<proc[msgCommand].context[<yellow> <&gt> /outpost team|outpost team|<yellow> <&gt> Click to view or edit team information ]><gray> - View or edit team information" targets:<player>
+          ### Uncomment below line when /outpost team command is finalized
+    ###      - ^narrate "<proc[msgCommand].context[<yellow> <&gt> /outpost team|outpost team|<yellow> <&gt> Click to view or edit team information ]><gray> - View or edit team information" targets:<player>
           - if <player.flag[TeaOutpostBypass]||false> == true {
             - ^narrate "" targets:<player>
             - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>/toutpost|toutpost|<dark_aqua>Click!]><gray> - Open the Admin Bypass panel" targets:<player>
