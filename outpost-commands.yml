@@ -1497,3 +1497,613 @@ TeaOutpost_PlayerCommand:
       - ^narrate "<proc[msgHover].context[<dark_aqua><&gt> Stand inside this Outpost to make changes.|<white>Outposts cannot be managed from a distance.]>" targets:<player>
       - queue clear
       }
+
+
+TeaOutpost_Command:
+    type: command
+    debug: false
+    name: toutpost
+    description: Tea Outpost
+    usage: /toutpost
+    default constants:
+      colourlist: Dark_Green|Dark_Aqua|Dark_Red|Dark_Purple|Gold|Gray|Dark_Gray|Blue|Green|Aqua|Red|Light_Purple|Yellow|White
+      mcmmolist: Acrobatics|Alchemy|Archery|Axes|Excavation|Fishing|Herbalism|Mining|Repair|Swords|Taming|Unarmed|Woodcutting
+      spelllist: Bad_Luck|Blindness|Fire_Resistance|Glowing|Haste|Hunger|Invisibility|Jump_Boost|Luck|Mining_Fatigue|Nausea|Night_Vision|Poison|Regeneration|Resistance|Saturation|Slowness|Speed|Strength|Water_Breathing|Weakness
+      targetlist: ALL|TEAM|ENEMY|NONE
+    script:
+      - if <player.flag[TeaOutpostBypass]||false> == false {
+        - execute as_player "outpost"
+        - ^narrate "<proc[msgHover].context[<dark_red><&lb>OUTPOST<&rb> Please contact Tea for an Admin Bypass.|<dark_red>But only if youre actually supposed to have it lol<&nl><dark_gray>Access Denied<&co> Tea.Outpost.Bypass]>" targets:<player>
+        - queue clear
+        }
+      - choose <context.args.first||default>:
+   ## CANCEL ---
+        - case cancel:
+          - narrate "<dark_aqua><&lb>OUTPOST<&rb> Location finder cancelled." targets:<player>
+          - flag <player> CreatingTeaOutpost:false
+    ## CONFIRM ---
+        - case confirm:
+         # - announce "<player.flag[TeaOutpostGoodSpotCheck]>"
+          - if <player.flag[OutpostCreationInProgress]||false> {
+            - narrate "<dark_aqua><&lb>OUTPOST<&rb> Outpost in progress. Thank you for your patience." targets:<player>
+            - queue clear
+            }
+          - if <player.flag[CreatingTeaOutpost]||false> == false {
+            - ^narrate "<gold><&lb>OUTPOST<&rb> Starting location finder, please reconfirm." targets:<player>
+           # - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Obsidian blocks must be on the surface." targets:<player>
+            - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<green>CONFIRM|toutpost confirm|<green>/toutpost confirm]> <dark_aqua>or <proc[msgCommand].context[<red>CANCEL|toutpost cancel|<red>/toutpost cancel]> <dark_aqua>this location." targets:<player>
+            - flag <player> CreatingTeaOutpost:true
+            - run TeaOutpost_Task
+            - queue clear
+            }
+     #     - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true {
+     #       - ^narrate "<gold><&lb>OUTPOST<&rb> There's already an outpost here!" targets:<player>
+     #       - ^narrate "<gold><&lb>OUTPOST<&rb> Please choose a better location." targets:<player>
+     #       - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<green>CONFIRM|toutpost confirm|<green>/toutpost confirm]> <dark_aqua>or <proc[msgCommand].context[<red>CANCEL|toutpost cancel|<red>/toutpost cancel]> <dark_aqua>this location." targets:<player>
+     #       - queue clear
+     #     }
+          - if <player.flag[TeaOutpostGoodSpotCheck]||false> != true {
+          #  - ^narrate "<gold><&lb>OUTPOST<&rb> Obsidian blocks must be on the surface." targets:<player>
+            - ^narrate "<gold><&lb>OUTPOST<&rb> Please choose a better location." targets:<player>
+            - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<green>CONFIRM|toutpost confirm|<green>/toutpost confirm]> <dark_aqua>or <proc[msgCommand].context[<red>CANCEL|toutpost cancel|<red>/toutpost cancel]> <dark_aqua>this location." targets:<player>
+            - queue clear
+          }
+        #  - if <player.location.cuboids.contains_any[<server.flag[TeaOutpostList].as_list>]> == true {
+
+          - flag <player> OutpostCreationInProgress:true
+          - narrate "<dark_aqua><&lb>OUTPOST<&rb> Creating outpost! Please stand by." targets:<player>
+          - flag <player> CreatingTeaOutpost:false
+          - run TeaOutpost_CreationTask
+   ## START ---
+        - case start:
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Please choose a location." targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Obsidian blocks must be on the surface." targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<green>CONFIRM|toutpost confirm|<green>This will create a new Outpost!]> <dark_aqua>or <proc[msgCommand].context[<red>CANCEL|toutpost cancel|<red>This will turn off the location finder!]> <dark_aqua>this location." targets:<player>
+          - if <player.flag[CreatingTeaOutpost]||false> == false {
+            - flag <player> CreatingTeaOutpost:true
+            - run TeaOutpost_Task
+            }
+   ## MANAGE ---
+        - case manage:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
+          - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
+          - ^narrate "" targets:<player>
+          - ^narrate "<gold><&lb>ADMIN<&rb> MANAGING '<gray><def[ManageName].to_uppercase><gold>'" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>MCMMO Focus<&co> <gray><server.flag[%ManageName%TrainingFocus]||None>|toutpost showmcmmo %ManageName%|<dark_aqua>Pick a new MCMMO Focus!]>" targets:<player>
+
+        #  - ^narrate "<gold><&lb>OUTPOST<&rb> Training Focus<&co> <gray><server.flag[%ManageName%TrainingFocus]||None>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgHint].context[<gold>Training Message<&co>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Type a new Message at the end of the command!]>" targets:<player>
+        #  - ^narrate "<gold><&lb>OUTPOST<&rb> Training Message<&co>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <gray><italic><server.flag[%ManageName%TrainingMessage]||None>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>|toutpost showspells %ManageName%|<dark_aqua>Pick a new Spell Effect!]>" targets:<player>
+         # - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>Spell Targets<&co> <gray><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Pick a new Spell Target!]>" targets:<player>
+    ###      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Add Spells|toutpost showspells %ManageName%|<dark_aqua>Buy a new Spell Effect!]>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>|toutpost spells %ManageName%|<dark_aqua>Pick a Spell Effect!]>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <gray><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Pick a Spell Target!]>" targets:<player>
+        #  - ^narrate "<gold> <&gt> Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>" targets:<player>
+        ##  - ^narrate "<gold> <&gt> Current Owner<&co> <gray><server.flag[%OwnerStuff%DisplayName]||%OwnerStuff%> / <%OwnerStuff%>%OwnerStuff% <gray>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary% " targets:<player>
+        #  - ^narrate "<gold> <&gt> Facing<&co> <gray><server.flag[%ManageName%Facing]||None>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<dark_aqua><&lt><&lt> RETURN TO OUTPOST LIST|toutpost list|<dark_aqua>Return to Outpost List]>" targets:<player>
+          
+          
+          - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
+          - ^narrate "<proc[msgHover].context[<dark_aqua> - Current Owner<&co> <white><server.flag[%OwnerStuff%DisplayName]||Wild> / <%OwnerStuff%>%OwnerStuff% <white>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary%|<%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild><gray> is the current owner.<&nl><%OwnerStuff%>%OwnerStuff% <gray>is their Team Colour.<&nl><%OwnerStuffSecondary%>%OwnerStuffSecondary%<gray> is a Personal Colour.]> " targets:<player>
+          - ^narrate "<proc[msgHover].context[<gray> - Training Time<&co> <white>%TrainingTime% (<server.flag[%ManageName%Facing].to_titlecase||Error>)|<gray>Visit this Outpost at %TrainingTime% for<&co><&nl><dark_aqua>+1 Minecraft Level<&nl><gray>+1 <server.flag[%ManageName%TrainingFocus]||None> Level (if Minecraft Level 30)<&nl><dark_aqua>+20 minutes of <server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||Nothing> (if Minecraft Level 60)]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Display Name<&co> <white><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>|toutpost rename %ManageName%<&sp>|<green>Only Nation Kings can change this.<&nl><dark_aqua>Click then type a new Name at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> MCMMO Focus<&co> <white><server.flag[%ManageName%TrainingFocus]||None>|toutpost showmcmmo %ManageName%|<green>Only Nation Kings can change this.<&nl><gray>Click to pick an MCMMO Focus!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Training Message<&co>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Click then type a new Message at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[   <white><italic><server.flag[%ManageName%TrainingMessage]||None>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Click then type a new Message at the end of the command!]>" targets:<player>
+        #  - ^narrate "" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Effect<&co> <white><server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||None>|toutpost spells %ManageName%|<gray>Click to pick a Spell Effect!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Click to pick a Spell Target!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Access Upgrades|outpost upgrades %ManageName%|<green>Click to buy and manage upgrades]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Change Log|toutpost lookup %ManageName%|<dark_aqua>Click to view Change Log]><gold> <&pipe> <proc[msgCommand].context[<gold>Visitor Log|toutpost lookup %ManageName%|<dark_aqua>Click to view Change Log]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Manage Towny|toutpost towny %ManageName%|<gray>Click to manage Towny Settings for this Outpost]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost list|<gold>Back to TOutpost List]>" targets:<player>
+     
+      #  - ^narrate "<gray> - <gold>Facing<&co> <gray><server.flag[%ManageName%Facing]||None>" targets:<player>
+     #   - ^narrate "<proc[msgCommand].context[<dark_aqua><&lt><&lt> RETURN TO OUTPOST LIST|toutpost list|<dark_aqua>Return to Outpost List]>" targets:<player>
+  #        }
+  #    }
+  #    else {
+  #      - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
+  #      }
+          
+   ## TOWNY ---
+        - case towny:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
+          - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
+          - ^narrate "" targets:<player>
+          - ^narrate "<gold><&lb>ADMIN<&rb> MANAGING '<gray><def[ManageName].to_uppercase><gold>'" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>MCMMO Focus<&co> <gray><server.flag[%ManageName%TrainingFocus]||None>|toutpost showmcmmo %ManageName%|<dark_aqua>Pick a new MCMMO Focus!]>" targets:<player>
+
+        #  - ^narrate "<gold><&lb>OUTPOST<&rb> Training Focus<&co> <gray><server.flag[%ManageName%TrainingFocus]||None>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgHint].context[<gold>Training Message<&co>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Type a new Message at the end of the command!]>" targets:<player>
+        #  - ^narrate "<gold><&lb>OUTPOST<&rb> Training Message<&co>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <gray><italic><server.flag[%ManageName%TrainingMessage]||None>" targets:<player>
+        #  - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>|toutpost showspells %ManageName%|<dark_aqua>Pick a new Spell Effect!]>" targets:<player>
+         # - ^narrate "<gold> <&gt> <proc[msgCommand].context[<gold>Spell Targets<&co> <gray><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Pick a new Spell Target!]>" targets:<player>
+    ###      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Add Spells|toutpost showspells %ManageName%|<dark_aqua>Buy a new Spell Effect!]>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>|toutpost spells %ManageName%|<dark_aqua>Pick a Spell Effect!]>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <gray><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Pick a Spell Target!]>" targets:<player>
+        #  - ^narrate "<gold> <&gt> Spell Effect<&co> <gray><server.flag[%ManageName%SpellEffect]||None>" targets:<player>
+        ##  - ^narrate "<gold> <&gt> Current Owner<&co> <gray><server.flag[%OwnerStuff%DisplayName]||%OwnerStuff%> / <%OwnerStuff%>%OwnerStuff% <gray>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary% " targets:<player>
+        #  - ^narrate "<gold> <&gt> Facing<&co> <gray><server.flag[%ManageName%Facing]||None>" targets:<player>
+       #   - ^narrate "<proc[msgCommand].context[<dark_aqua><&lt><&lt> RETURN TO OUTPOST LIST|toutpost list|<dark_aqua>Return to Outpost List]>" targets:<player>
+          
+          
+          - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
+          - if <server.flag[%ManageName%scriptlist].contains[TeaOutpost_UpdateOutpostTownTask]||false> {
+            - ^narrate "<proc[msgHover].context[<gray> <&gt> Towny Link<&co>|<dark_red>Please do not remove Towny Link unless you know what you're doing]><proc[msgHover].context[<green> ON |<green>Towny Link is currently ON.]><proc[msgCommand].context[<gray>/ OFF|toutpost townylinkoff %ManageName%|<dark_red>CLICK TO REMOVE TOWNY LINK]>" targets:<player>
+            }
+            else {
+              - ^narrate "<proc[msgHover].context[<gray> <&gt> Towny Link<&co>|<dark_red>Please do not activate Towny Link until all the below is ready.]><proc[msgCommand].context[<gray> ON /|toutpost townylinkon %ManageName%|<dark_red>CLICK TO ACTIVATE TOWNY LINK]><proc[msgHover].context[<green> OFF|<green>Towny Link is currently OFF.]>" targets:<player>
+              }
+    #      - ^narrate "<proc[msgHover].context[<gray> - Nation Name<&co> <white>%TrainingTime% (<server.flag[%ManageName%Facing].to_titlecase||Error>)|<gray>Visit this Outpost at %TrainingTime% for<&co><&nl><dark_aqua>+1 Minecraft Level<&nl><gray>+1 <server.flag[%ManageName%TrainingFocus]||None> Level (if Minecraft Level 30)<&nl><dark_aqua>+20 minutes of <server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||Nothing> (if Minecraft Level 60)]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Nation Name<&co> <white><server.flag[%ManageName%NationName]||<dark_red>None>|toutpost setnation %ManageName%<&sp>|<dark_aqua>Click then type the Nation Name at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Town Name<&co> <white><server.flag[%ManageName%TownName]||<dark_red>None>|toutpost settown %ManageName%<&sp>|<dark_aqua>Click then type the Town Name at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> NPC Name<&co> <white><server.flag[%ManageName%NPCName]||<dark_red>None>|toutpost setnpc %ManageName%<&sp>|<dark_aqua>Click then type the NPC Name at the end of the command!]>" targets:<player>
+          - ^if <server.flag[%ManageName%TownName]||null> != null {
+            - ^define TownName <server.flag[%ManageName%TownName]>
+            - ^narrate "<proc[msgHover].context[<gray> - %TownName% Outpost List<&co>|<dark_aqua>Outpost List]>" targets:<player>
+            - foreach <server.flag[%TownName%OutpostList].as_list> {
+              - ^narrate "<proc[msgCommand].context[<gray> - %value%|toutpost manage %value%|<dark_aqua>Click for shortcut to manage]>" targets:<player>
+              }
+            }
+    #      - ^narrate "<proc[msgHint].context[<gold> <&gt> Town NPC Name<&co> <white><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>|toutpost rename %ManageName%<&sp>|<dark_aqua>Click then type a new Name at the end of the command!]>" targets:<player>
+    #      - ^narrate "<proc[msgCommand].context[<gold> <&gt> MCMMO Focus<&co> <white><server.flag[%ManageName%TrainingFocus]||None>|toutpost showmcmmo %ManageName%|<green>Only Nation Kings can change this.<&nl><gray>Click to pick an MCMMO Focus!]>" targets:<player>
+    #      - ^narrate "<proc[msgHint].context[<gold> <&gt> Training Message<&co>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Click then type a new Message at the end of the command!]>" targets:<player>
+    #      - ^narrate "<proc[msgHint].context[   <white><italic><server.flag[%ManageName%TrainingMessage]||None>|toutpost setmessage %ManageName%<&sp>|<dark_aqua>Click then type a new Message at the end of the command!]>" targets:<player>
+    #    #  - ^narrate "" targets:<player>
+    #      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Effect<&co> <white><server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||None>|toutpost spells %ManageName%|<gray>Click to pick a Spell Effect!]>" targets:<player>
+    #      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|toutpost showtargets %ManageName%|<dark_aqua>Click to pick a Spell Target!]>" targets:<player>
+    #      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Access Upgrades|outpost upgrades %ManageName%|<green>Click to buy and manage upgrades]>" targets:<player>
+    #      - ^narrate "<proc[msgCommand].context[<gold> <&gt> Change Log|toutpost lookup %ManageName%|<dark_aqua>Click to view Change Log]><gold> <&pipe> <proc[msgCommand].context[<gold>Visitor Log|toutpost lookup %ManageName%|<dark_aqua>Click to view Change Log]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost manage %ManageName%|<gold>Back to TOutpost Manage]>" targets:<player>
+          
+   ## TOWNYLINKON
+        - case townylinkon:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - flag server %ManageName%scriptlist:->:TeaOutpost_UpdateOutpostTownTask
+          - run TeaOutpost_Write_Data def:%ManageName%|<player>|<player.name>|<player.flag[RaceColour]||Gray>|TownyLink|ON
+          - execute as_player "toutpost towny %ManageName%"
+   ## TOWNYLINKOFF
+        - case townylinkoff:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - flag server %ManageName%scriptlist:<-:TeaOutpost_UpdateOutpostTownTask
+          - run TeaOutpost_Write_Data def:%ManageName%|<player>|<player.name>|<player.flag[RaceColour]||Gray>|TownyLink|OFF
+          - execute as_player "toutpost towny %ManageName%"
+   ## NATION NAME
+        - case setnation:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NationName <context.args.get[3]||null>
+          - if %NationName% == null {
+            - ^narrate "<Dark_Red><&lb>OUTPOST<&rb>Please type a nation name after the Outpost ID." targets:<player>
+            - queue clear
+            }
+          - flag server %ManageName%NationName:%NationName%
+          - run TeaOutpost_Write_Data def:%ManageName%|<player>|<player.name>|<player.flag[RaceColour]||Gray>|Set<&sp>Nation|%NationName%
+          - execute as_player "toutpost towny %ManageName%"
+   ## TOWN NAME
+        - case settown:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define TownName <context.args.get[3]||null>
+          - define OldTownName <server.flag[%ManageName%TownName]||null>
+          - if %TownName% == null {
+            - ^narrate "<Dark_Red><&lb>OUTPOST<&rb>Please type a Town name after the Outpost ID." targets:<player>
+            - queue clear
+            }
+          - flag server %ManageName%TownName:%TownName%
+          - if !<server.flag[%TownName%OutpostList].contains[%ManageName%]||false> {
+            - flag server %TownName%OutpostList:->:%ManageName%
+            }
+          - if %TownName% != %OldTownName% {
+            - flag server %OldTownName%OutpostList:<-:%ManageName%
+            }
+          - run TeaOutpost_Write_Data def:%ManageName%|<player>|<player.name>|<player.flag[RaceColour]||Gray>|Set<&sp>Town|%TownName%
+          - execute as_player "toutpost towny %ManageName%"
+   ## NPC NAME
+        - case setnpc:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NPCName <context.args.get[3]||null>
+          - if %NPCName% == null {
+            - ^narrate "<Dark_Red><&lb>OUTPOST<&rb>Please type an NPC name after the Outpost ID." targets:<player>
+            - queue clear
+            }
+          - flag server %ManageName%NPCName:%NPCName%
+          - run TeaOutpost_Write_Data def:%ManageName%|<player>|<player.name>|<player.flag[RaceColour]||Gray>|Set<&sp>NPC|%NPCName%
+          - execute as_player "toutpost towny %ManageName%"
+
+   ## LIST TEAMS ---
+        - case listteams:
+          - define CurrentColour <player.flag[RaceColourSecondary]||Gray>
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> THERE ARE <script.constant[colourlist].as_list.size> TEAMS." targets:<player>
+          - foreach <script.constant[colourlist]> {
+            - define DisplayName <server.flag[%value%DisplayName]||Wild>
+            - define NationName <server.flag[%value%NationName]||Nationless>
+            - define PlayerCount <server.flag[%value%PlayerList].size||0>
+            - define OutpostCount <server.flag[%value%OutpostList].size||0>
+            - ^narrate "<proc[msgCommand].context[<%value%> <&gt> %DisplayName% / %NationName% / %value% - %PlayerCount%/%OutpostCount% |toutpost manageteam %value%|<%value%>Click to view %value% info]>" targets:<player>
+            }
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> Back|toutpost|<gold>Back to Outpost Admin Menu]>" targets:<player>
+          
+   ## MANAGE ---
+        - case manageteam:
+          - define ManageName <context.args.get[2]>
+          - define ManageNationName <server.flag[%ManageName%NationName]||None>
+          - define ManageDisplayName <server.flag[%ManageName%DisplayName]||Wild>
+          - define ManageDisplayTag <server.flag[%ManageName%DisplayNameTag]||WLD>
+          - ^narrate "" targets:<player>
+          - ^narrate "<gold><&lb>ADMIN<&rb> MANAGING '<%ManageName%><def[ManageName].to_uppercase><gold>' TEAM" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Display Name<&co> <%ManageName%>%ManageDisplayName%|toutpost teamsetname %ManageName%<&sp>|<dark_aqua>Click then type a new Name at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Display Name Tag<&co> <%ManageName%>%ManageDisplayTag%|toutpost teamsetnametag %ManageName%<&sp>|<dark_aqua>Click then type a new Name tag at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgHint].context[<gold> <&gt> Nation Name<&co> <%ManageName%>%ManageNationName%|toutpost teamsetnation %ManageName%<&sp>|<dark_aqua>Click then type a new Name at the end of the command!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Player Count<&co> <%ManageName%><server.flag[%ManageName%PlayerList].size||0>|toutpost showmcmmo %ManageName%|<green>Only Nation Kings can change this.<&nl><gray>Click to pick an MCMMO Focus!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold> <&gt> Outpost Count<&co> <%ManageName%><server.flag[%ManageName%OutpostList].size||0>|toutpost showmcmmo %ManageName%|<green>Only Nation Kings can change this.<&nl><gray>Click to pick an MCMMO Focus!]>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost listteams|<gold>Back to Outpost Admin Team List]>" targets:<player>
+
+   ## TEAM SET NAME ---
+        - case teamsetname:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NewName <context.args.get[3]>
+          - flag server %ManageName%DisplayName:%NewName%
+          - execute as_player "toutpost manageteam %ManageName%"
+          
+   ## TEAM SET NAME TAG---
+        - case teamsetnametag:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NewNameTag <context.args.get[3]>
+          - flag server %ManageName%DisplayNameTag:%NewNameTag%
+          - execute as_player "toutpost manageteam %ManageName%"
+
+   ## TEAM SET NATION ---
+        - case teamsetnation:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NewNation <context.args.get[3]>
+          - flag server %ManageName%NationName:%NewNation%
+          - execute as_player "toutpost manageteam %ManageName%"
+
+   ## RENAME
+        - case rename:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NewNameList <context.args.exclude[<context.args.get[1]>|<context.args.get[2]>].as_list>
+          - define NewNameSize <context.args.exclude[<context.args.get[1]>|<context.args.get[2]>].as_list.size>
+          - define repeatcount 3
+          - define FlagName <context.args.get[3]>
+
+         # - flag server %ManageName%DisplayName:clear
+          - repeat <def[NewNameSize].sub[1].as_int> {
+            - define repeatcount <def[repeatcount].add[1]>
+            - define FlagName %FlagName%<&sp><context.args.get[%repeatcount%]>
+          #  - define FlagName <def[FlagName]||>%NewName%<&sp>
+           # - flag server %ManageName%DisplayName:%FlagName%<&sp>%value%
+          }
+          - flag server %ManageName%DisplayName:%FlagName%
+
+         # - define NewName <%NewName%.replace[|].with[]>
+        #  - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
+        #  - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
+     ##     - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <green>Renaming <dark_aqua>'<aqua>%ManageName%<dark_aqua>' to '<green>%FlagName%<dark_aqua>'." targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <proc[msgCommand].context[<aqua>Reopen Outpost List?|toutpost list|toutpost list]>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Display Name<&co> <aqua><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Training Focus<&co> <aqua><server.flag[%ManageName%TrainingFocus]||None>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Training Message<&co>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <aqua><italic><server.flag[%ManageName%TrainingMessage]||None>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Spell Effect<&co> <aqua><server.flag[%ManageName%SpellEffect]||None>" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Current Owner<&co> <aqua><server.flag[%OwnerStuff%DisplayName]||None> / <%OwnerStuff%>%OwnerStuff% / <%OwnerStuffSecondary%>%OwnerStuffSecondary% " targets:<player>
+          - execute as_player "toutpost manage cu@%ManageName%"
+         # - narrate "<dark_aqua>"
+
+   ## SET MESSAGE
+        - case setmessage:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define NewMessageList <context.args.exclude[<context.args.get[1]>|<context.args.get[2]>].as_list>
+          - define NewMessageSize <context.args.exclude[<context.args.get[1]>|<context.args.get[2]>].as_list.size>
+          - define repeatcount 3
+          - define FlagName <context.args.get[3]>
+          - repeat <def[NewMessageSize].sub[1].as_int> {
+            - define repeatcount <def[repeatcount].add[1].as_int>
+            - define FlagName %FlagName%<&sp><context.args.get[%repeatcount%]>
+          }
+          - flag server %ManageName%TrainingMessage:%FlagName%
+          #- ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <green>Setting message of <dark_aqua>'<aqua>%ManageName%<dark_aqua>' to '<green>%FlagName%<dark_aqua>'." targets:<player>
+          - execute as_player "toutpost manage cu@%ManageName%"
+
+   ## SHOW MCMMO ---
+        - case showmcmmo:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST> MCMMO FOCUS" targets:<player>
+          - define LineColour gray
+          - foreach <script.constant[mcmmolist]> {
+            - if <server.flag[%ManageName%TrainingFocus]> == %value% {
+              - ^narrate "<proc[msgCommand].context[<green> <&gt> <bold>%value%|toutpost setmcmmo %ManageName% %value%|<green>Confirm %value%]>" targets:<player>
+              }
+              else {
+                - ^narrate "<proc[msgCommand].context[<%LineColour%> <&gt> %value%|toutpost setmcmmo %ManageName% %value%|<%LineColour%>Select %value%]>" targets:<player>
+                }
+            - if <def[LineColour]||dark_aqua> == dark_aqua {
+              - define LineColour gray
+              }
+              else {
+                - define LineColour dark_aqua
+         
+                }
+            }
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> RETURN TO MANAGE PAGE|toutpost manage cu@%ManageName%|<gold>/toutpost manage cu@%ManageName%]>" targets:<player>
+
+   ## SET MCMMO ---
+        - case setmcmmo:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define SkillName <context.args.get[3]>
+          - flag server %ManageName%TrainingFocus:%SkillName%
+          - execute as_player "toutpost manage cu@%ManageName%"
+
+   ## SHOW SPELLS ---
+        - case showspells:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST> AVAILABLE SPELL LIST" targets:<player>
+          - define SpellCount 1
+          - define ColourSwitch gray
+          - ^foreach <script.constant[spelllist]> {
+            - ^if <server.flag[%ManageName%SpellsAdded].contains[%value%]||false> == true {
+              - ^narrate "<proc[msgHover].context[<green><&sp><&gt><&sp><bold><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|<green>Already added!]>" targets:<player>
+            #  - ^foreach next
+              }
+              else {
+             #   - define pad '<el@val[%lineLen%].sub[<def[%value%].length>].as_int>'
+             #   - determine '<def[string]><&6.pad_right[%pad%].with[<&sp>]><def[string2]>'
+             #   - define SpellOne <proc[msgCommand].context[<%ColourSwitch%><&sp><&gt><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist].as_list.get[%SpellCount%]||Error>]>
+             #  - ^narrate "<proc[msgCentered].context[30|<%ColourSwitch%><script.constant[spelllist].as_list.get[%SpellCount%]||Error>]><%ColourSwitch%><script.constant[spelllist2].as_list.get[%SpellCount%]||Error>" targets:<player>
+             #  - define pad '<el@val[%lineLen%].sub[<def[%value%].length>].as_int>'
+             #  - determine '<def[string]><&6.pad_right[%pad%].with[<&sp>]><def[string2]>'
+               - ^define SpellOne <proc[msgCommand].context[<%ColourSwitch%><&sp><&gt><&sp><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|toutpost<&sp>buyspell<&sp>%ManageName%<&sp><script.constant[spelllist].as_list.get[%SpellCount%].trim||Error>|<%ColourSwitch%>Buy<&sp>%value%<&co><&sp>10<&sp>000<&sp>Gold<&sp>(Admin<&sp>Bypass<&co><&sp>FREE)]>
+             #  - ^define SpellTwo <proc[msgCommand].context[<%ColourSwitch%><script.constant[spelllist2].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>]>
+               - ^narrate "%SpellOne%" targets:<player>
+              # - ^narrate "<proc[msgCentered2].context[190|%SpellOne%]>|<proc[msgCentered3].context[190|%SpellTwo%]>" targets:<player>
+                }
+            - ^if %ColourSwitch% == dark_aqua {
+              - ^define ColourSwitch gray
+              }
+              else {
+                - ^define ColourSwitch dark_aqua
+              }
+            - ^define SpellCount <def[SpellCount].add[1].as_int>
+            }
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost manage cu@%ManageName%|<gold>Back to <server.flag[%ManageName%DisplayName]||The<&sp>Outpost>]>" targets:<player>
+   ## SET SPELLS ---
+        - case buyspell:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define SpellName <context.args.get[3]>
+          - flag server %ManageName%SpellsAdded:->:%SpellName%
+          - flag server %ManageName%SpellEffect:%SpellName%
+          - execute as_player "toutpost spells %ManageName%"
+   ## SPELLS ---
+        - case spells:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST> SPELL EFFECT" targets:<player>
+          - define SpellCount 1
+          - define ColourSwitch gray
+          - ^foreach <server.flag[%ManageName%SpellsAdded].as_list||Bad_Luck> {
+            - ^if <server.flag[%ManageName%SpellEffect]> == %value% {
+              - ^define SpellOne <proc[msgCommand].context[<green><&sp><&gt><&sp><bold>%value%|outpost<&sp>setspell<&sp>%ManageName%<&sp>%value%|<green>Confirm<&sp>%value%]>
+             # - ^define SpellTwo <proc[msgCommand].context[<%ColourSwitch%><script.constant[spelllist2].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>]>
+              - ^narrate "%SpellOne%" targets:<player>
+              }
+                else {
+               #   - define pad '<el@val[%lineLen%].sub[<def[%value%].length>].as_int>'
+               #   - determine '<def[string]><&6.pad_right[%pad%].with[<&sp>]><def[string2]>'
+               #   - define SpellOne <proc[msgCommand].context[<%ColourSwitch%><&sp><&gt><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist].as_list.get[%SpellCount%]||Error>]>
+               #  - ^narrate "<proc[msgCentered].context[30|<%ColourSwitch%><script.constant[spelllist].as_list.get[%SpellCount%]||Error>]><%ColourSwitch%><script.constant[spelllist2].as_list.get[%SpellCount%]||Error>" targets:<player>
+               #  - define pad '<el@val[%lineLen%].sub[<def[%value%].length>].as_int>'
+               #  - determine '<def[string]><&6.pad_right[%pad%].with[<&sp>]><def[string2]>'
+                 - ^define SpellOne <proc[msgCommand].context[<%ColourSwitch%><&sp><&gt><&sp>%value%|toutpost<&sp>setspell<&sp>%ManageName%<&sp>%value%|<%ColourSwitch%>Select<&sp>%value%]>
+               #  - ^define SpellTwo <proc[msgCommand].context[<%ColourSwitch%><script.constant[spelllist2].as_list.get[%SpellCount%]||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>|toutpost<&sp>setspell<&sp>%ManageName%<&sp><script.constant[spelllist2].as_list.get[%SpellCount%].trim||Error>]>
+                 - ^narrate "%SpellOne%" targets:<player>
+                # - ^narrate "<proc[msgCentered2].context[190|%SpellOne%]>|<proc[msgCentered3].context[190|%SpellTwo%]>" targets:<player>
+                  }
+            - ^if %ColourSwitch% == dark_aqua {
+              - ^define ColourSwitch gray
+              }
+              else {
+                - ^define ColourSwitch dark_aqua
+              }
+            - ^define SpellCount <def[SpellCount].add[1].as_int>
+            }
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost manage cu@%ManageName%|<gold>Back to <server.flag[%ManageName%DisplayName]||The<&sp>Outpost>]>" targets:<player>
+   ## SET SPELLS ---
+        - case setspell:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define SpellName <context.args.get[3]>
+          - flag server %ManageName%SpellEffect:%SpellName%
+          - execute as_player "toutpost manage cu@%ManageName%"
+
+   ## SHOW TARGETS ---
+        - case showtargets:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> <server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST> SPELL TARGETS" targets:<player>
+          - foreach <script.constant[targetlist]> {
+            - if <server.flag[%ManageName%SpellTargets]||ALL> == %value% {
+              - ^narrate "<green> <&gt> <proc[msgCommand].context[<green><bold>%value%|toutpost settargets %ManageName% %value%|<green>Confirm %value%]>" targets:<player>
+              }
+              else {
+                - ^narrate "<dark_aqua> <&gt> <proc[msgCommand].context[<dark_aqua>%value%|toutpost settargets %ManageName% %value%|<dark_aqua>Select %value%]>" targets:<player>
+                }
+            }
+          - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> RETURN TO MANAGE PAGE|toutpost manage cu@%ManageName%|<gold>/toutpost manage cu@%ManageName%]>" targets:<player>
+
+   ## SET TARGETS ---
+        - case settargets:
+          - define ManageName <context.args.get[2].replace[cu@].with[]>
+          - define TargetName <context.args.get[3]>
+          - flag server %ManageName%SpellTargets:%TargetName%
+          - execute as_player "toutpost manage cu@%ManageName%"
+
+        - case delete:
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Deleting <context.args.get[2]>" targets:<player>
+          - run TeaOutpost_DeletionTask def:<context.args.get[2]>
+
+   ## AGREE ---
+        - case agree:
+          - define AgreeKeyword <context.args.get[2]>
+          - define AgreeKeywordColour <context.args.get[3]>
+          - define AgreeCommand <context.args.get[4]>
+          - define AgreeCommandVariable <context.args.get[5]>
+          - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Please click here to <proc[msgCommand].context[<%AgreeKeywordColour%>CONFIRM|toutpost %AgreeCommand% %AgreeCommandVariable%|<%AgreeKeywordColour%>There's no going back!]> <dark_aqua>%AgreeKeyword%." targets:<player>
+        - case teleport:
+          - define Destination <context.args.get[2]>
+          - execute as_player "teleport <player.name> <%Destination%.center.x.as_int> <%Destination%.center.y.as_int> <%Destination%.center.z.as_int>"
+
+   ## LIST ---
+        - case list:
+          - if <context.args.get[2].as_int||1> == <context.args.get[2]||1> && <context.args.get[2].as_int||1> > 0 {
+            - define PageNumber <context.args.get[2]||1>
+            }
+            else {
+              - define PageNumber 1
+              }
+          - define NextPage <def[PageNumber].add[1].as_int>
+       #   - if <server.flag[TeaOutpostList].size> < <math.as_int:%NextPage%*10> {
+       #     - define NextPage %PageNumber%
+       #     }
+          - define PreviousPage <def[PageNumber].sub[1].as_int>
+          - define ListEndInt <def[PageNumber].mul[10]>
+          - if <server.flag[TeaOutpostList].size> < %ListEndInt% {
+            - define ListEndInt <server.flag[TeaOutpostList].size>
+            - define NextPage %PageNumber%
+
+            }
+          - define ListStartInt <math.as_int:((%PageNumber%-1)*10)+1>
+          - if <def[ListStartInt]> < 1 {
+            - define ListStartInt 1
+            }
+          - narrate "" targets:<player>
+          - narrate "<dark_aqua><&lb>ADMIN<&rb> THERE ARE <server.flag[TeaOutpostList].size> OUTPOSTS." targets:<player>
+          - foreach <server.flag[TeaOutpostList].as_list.get[%ListStartInt%].to[%ListEndInt%]> {
+         #   - if <def[LineColour]||dark_aqua> == dark_aqua {
+         #     - define LineColour aqua
+         #     }
+         #     else {
+         #       - define LineColour dark_aqua
+         #
+         #       }
+            - define Colour <server.flag[Ownerof<def[value].replace[cu@].with[]>]||Gray>
+            - define ColourSecondary <server.flag[Ownerof<def[value].replace[cu@].with[]>Secondary]||Gray>
+           # - narrate "<%LineColour%><&lb><server.flag[TeaOutPostList].find[%value%]><&rb> <def[value].replace[cu@].with[]><&co><&sp><proc[msgCommand].context[<dark_green>Teleport|toutpost agree teleport green teleport %value%|<dark_green>/toutpost teleport %value%]><&sp><proc[msgCommand].context[<gold>Manage|toutpost manage %value%|<gold>/toutpost manage %value%]><&sp><proc[msgCommand].context[<dark_red>Delete|toutpost agree deletion dark_red delete %value%|<dark_red>/toutpost delete %value%]>" targets:<player>
+            - narrate "<%ColourSecondary%><&lb><%Colour%><server.flag[TeaOutPostList].find[%value%]><%ColourSecondary%><&rb> <proc[msgHover].context[<%Colour%><server.flag[<def[value].replace[cu@].with[]>DisplayName]||The<&sp>Outpost><&co>|<%Colour%>OutpostID: <%ColourSecondary%><def[value].replace[cu@].with[]>]><&sp><proc[msgCommand].context[<dark_green>Teleport|toutpost agree teleport green teleport %value%|<dark_green>Teleport: <%ColourSecondary%><def[value].replace[cu@].with[]>]><&sp><proc[msgCommand].context[<gold>Manage|toutpost manage %value%|<gold>Manage: <%ColourSecondary%><def[value].replace[cu@].with[]>]><&sp><proc[msgCommand].context[<dark_red>Delete|toutpost agree deletion dark_red delete %value%|<dark_red>Delete: <%ColourSecondary%><def[value].replace[cu@].with[]>]>" targets:<player>
+            }
+        #  - narrate "<dark_aqua><proc[msgCommand].context[<tern[<def[PageNumber].is[MORE].than[1]>]:<dark_aqua>||<gray>>PREVIOUS|toutpost list %PreviousPage%|toutpost list %PreviousPage%]>" targets:<player>
+          - narrate "<dark_aqua><&lt><&lt> <tern[<def[PageNumber].is[MORE].than[1]>]:<proc[msgCommand].context[<dark_aqua>PREVIOUS|toutpost list %PreviousPage%|toutpost list %PreviousPage%]>||<dark_gray>PREVIOUS> <dark_aqua>- - - <tern[<def[PageNumber].is[==].to[%NextPage%]>]:<dark_gray>NEXT||<proc[msgCommand].context[<dark_aqua>NEXT|toutpost list %NextPage%|toutpost list %NextPage%]>> <dark_aqua><&gt><&gt>" targets:<player>
+          - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost|<gold>Back to Outpost Menu]>" targets:<player>
+
+   ## LOOKUP ---
+        - case lookup:
+          - if <context.args.get[2]||null> == null && <context.args.get[3]||null> == null {
+            - narrate "<dark_red><&lb>OUTPOST<&rb> /toutpost lookup <&lb><&lt>outpostID<&gt><&rb> (<&lt>pagenumber<&gt>) " targets:<player>
+            - queue clear
+            }
+          - define OutpostID <context.args.get[2]||None>
+          - define Colour <server.flag[Ownerof%OutpostID%]||Gray>
+          - define path "%OutpostID%"
+          - if <context.args.get[3].as_int||1> == <context.args.get[3]||1> && <context.args.get[3].as_int||1> > 0 {
+            - define PageNumber <context.args.get[3]||1>
+            }
+            else {
+              - define PageNumber 1
+              }
+          - define NextPage <def[PageNumber].add[1].as_int>
+       #   - if <server.flag[TeaOutpostList].size> < <math.as_int:%NextPage%*10> {
+       #     - define NextPage %PageNumber%
+       #     }
+          - define PreviousPage <def[PageNumber].sub[1].as_int>
+          - define ListEndInt <def[PageNumber].mul[10].as_int>
+         # - if <server.flag[TeaOutpostList].size> < %ListEndInt% {
+         #   - define ListEndInt <server.flag[TeaOutpostList].size>
+         #   - define NextPage %PageNumber%
+    
+         #   }
+          - define ListStartInt <math.as_int:((%PageNumber%-1)*10)+1>
+          - if <def[ListStartInt]> < 1 {
+            - define ListStartInt 1
+            }
+          - define ListFullCount <proc[TeaOutpost_get_edits].context[%OutpostID%|1|100]||li@>
+          - if <def[ListFullCount].size> < %ListEndInt% {
+            - define ListEndInt <def[ListFullCount].size>
+            - define PageNumber <def[ListEndInt].div[10].round_down.add[1]||1>
+            - define ListStartInt <def[PageNumber].sub[1].mul[10].add[1]>
+            - define NextPage %PageNumber%
+            - define PreviousPage <def[PageNumber].sub[1].as_int>
+
+            - define ListEdits <proc[TeaOutpost_get_edits].context[%OutpostID%|%ListStartInt%|%ListEndInt%]||li@>
+            }
+            else {
+            - define ListEdits <proc[TeaOutpost_get_edits].context[%OutpostID%|%ListStartInt%|%ListEndInt%]||li@>
+            }
+        #  - narrate "" targets:<player>
+         # - narrate "<gold><&lb>OUTPOST<&rb> THERE ARE <server.flag[TeaOutpostList].size> OUTPOSTS" targets:<player>
+         # - foreach <server.flag[TeaOutpostList].as_list.get[%ListStartInt%].to[%ListEndInt%]> {
+          
+          - if !<yaml.list.contains[TeaOutpost_%OutpostID%]> {
+            - if !<server.has_file[/Outpost/<def[OutpostID]>_CHANGES.yml]> {
+              - narrate "<dark_red><&lb>OUTPOST<&rb> No logged info found."
+              - queue clear
+              } else {
+              - yaml "load:/Outpost/<def[OutpostID]>_CHANGES.yml" id:TeaOutpost_%OutpostID%
+              }
+            }
+          - if "<yaml[TeaOutpost_%OutpostID%].contains[<def[path]>]>" {
+            - define lookup_start <server.current_time_millis>
+            - ^define ColourSwitch dark_aqua
+            - narrate "" targets:<player>
+
+           # - narrate "<&6>Found <green><yaml[TeaOutpost_%OutpostID%].list_keys[<def[path]>].size||0><&6> entries for this location. Showing most recent <green>%ListStartInt%%ListEndInt%<&6><&co>"
+           # - narrate "<&6>Found <green><def[ListEdits].size||0><&6> entries for this location. Showing most recent <green>%ListStartInt%%ListEndInt%<&6><&co>"
+            - define PageCount <def[ListFullCount].size.div[10].round_down.add[1]||0>
+            - narrate "<&6><&lb>OUTPOST<&rb> THERE <tern[<def[PageCount].as_int.is[EQUALS].to[1]>]:IS <green><def[PageCount]><&6> PAGE||ARE <green><def[PageCount]><&6> PAGES> FOR <%Colour%><server.flag[%OutpostID%DisplayName].to_uppercase||THE OUTPOST><gold>."
+            - narrate "<dark_aqua><util.date.time.year>-<util.date.time.month.replace[regex:^(?!..)].with[0]>-<util.date.time.day.replace[regex:^(?!..)].with[0]> TODAY"
+            - foreach <proc[TeaOutpost_get_edits].context[%OutpostID%|%ListStartInt%|%ListEndInt%]||li@> {
+              - ^if %ColourSwitch% == gray {
+              - ^define ColourSwitch dark_aqua
+              }
+              else {
+                - ^define ColourSwitch gray
+              }
+              - define entry <def[value].split[/]>
+                #  - define entries <def[entries].include[%timestamp%/<yaml[TeaOutpost_%OutpostID%].read[<def[path]>.%timestamp%.Player]||nobody>/<yaml[TeaOutpost_%OutpostID%].read[<def[path]>.%timestamp%.PlayerName]||nobody>/<yaml[TeaOutpost_%OutpostID%].read[<def[path]>.%timestamp%.TeamColour]||none>]>/<yaml[TeaOutpost_%OutpostID%].read[<def[path]>.%timestamp%.Change]||none>]>/<yaml[TeaOutpost_%OutpostID%].read[<def[path]>.%timestamp%.Result]||none>]>
+              - define DisplayColour <def[entry].get[4]>
+           #   - narrate "<&6><def[entry].get[1].time.year>-<def[entry].get[1].time.month>-<def[entry].get[1].time.day> <def[entry].get[1].time.hour><&co><def[entry].get[1].time.minute><&co><def[entry].get[1].time.second><&co> <%DisplayColour%><def[entry].get[4]><&e> did <&b><def[entry].get[5]><&e> with result <&b><def[entry].get[6]><&e>."
+             # - narrate "<%ColourSwitch%><def[entry].get[1].time.year>-<def[entry].get[1].time.month.replace[regex:^(?!..)].with[0]>-<def[entry].get[1].time.day.replace[regex:^(?!..)].with[0]> <def[entry].get[1].time.hour.replace[regex:^(?!..)].with[0]><&co><def[entry].get[1].time.minute.replace[regex:^(?!..)].with[0]> <%DisplayColour%><&pipe><&pipe> <def[entry].get[5]><&co> <def[entry].get[6]>"
+              - narrate "<proc[msgHover].context[<%ColourSwitch%><def[entry].get[1].time.year>-<def[entry].get[1].time.month.replace[regex:^(?!..)].with[0]>-<def[entry].get[1].time.day.replace[regex:^(?!..)].with[0]>|<%ColourSwitch%><def[entry].get[1].time.year>-<def[entry].get[1].time.month.replace[regex:^(?!..)].with[0]>-<def[entry].get[1].time.day.replace[regex:^(?!..)].with[0]> @ <%ColourSwitch%><def[entry].get[1].time.hour><&co><def[entry].get[1].time.minute.replace[regex:^(?!..)].with[0]>]> <%DisplayColour%><def[entry].get[3]> <&pipe> <def[entry].get[5]><&co> <def[entry].get[6]>"
+              }
+           # - narrate "<&c>Looked up results in <server.current_time_millis.sub[%lookup_start%].as_int>ms."
+            - narrate "<tern[<def[PageNumber].is[MORE].than[1]>]:<proc[msgCommand].context[<gold><&lb><green><&lt><&lt>%PreviousPage%<gold><&rb>|toutpost lookup %OutpostID% %PreviousPage%|<green>Previous Page]>||<proc[msgHover].context[<gold><&lb><dark_gray><&lt><&lt><gold><&rb>|<dark_gray>No previous page]>> <gold>- - <proc[msgCommand].context[<gold><&lb><green>%PageNumber%<gold><&rb>|toutpost lookup %OutpostID% %PageNumber%|<green>Refresh Page %PageNumber%]><gold> - - <tern[<def[PageNumber].is[==].to[%NextPage%]>]:<proc[msgHover].context[<gold><&lb><dark_gray><&gt><&gt><gold><&rb>|<dark_gray>No next page]>||<proc[msgCommand].context[<gold><&lb><green>%NextPage%<&gt><&gt><gold><&rb>|toutpost lookup %OutpostID% %NextPage%|<green>Next Page]>>" targets:<player>
+            - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|toutpost manage %OutpostID%|<gold>Back to Outpost Manage]>" targets:<player>
+
+            } else {
+            - narrate "<&c>No logged info was found for this location."
+            - queue clear
+            }
+   ## DEFAULT
+        - default:
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Outpost by Tea" targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Use this command to create a capturable outpost." targets:<player>
+        #  - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<aqua>START|toutpost start|<aqua>Click to start!]> <dark_aqua>location finder." targets:<player>
+        #
+          - ^narrate "" targets:<player>
+          - ^narrate "<dark_aqua><&lb>ADMIN<&rb> Outpost by Tea" targets:<player>
+         # - ^narrate "<gray>The <&gt> symbol means clickable text!" targets:<player>
+
+          - ^narrate "<proc[msgHover].context[<gold> <&gt> |<gold>This line has clickable text!]><proc[msgCommand].context[<gold>/outpost|outpost|<gold>Click!]><gray> - Open the Player Panel" targets:<player>
+          - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>/toutpost list|toutpost list|<dark_aqua>Click!]><gray> - View or manage all outposts" targets:<player>
+          - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>/toutpost listteams|toutpost listteams|<dark_aqua>Click!]><gray> - View or manage all teams" targets:<player>
+         # - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>outpost player|outpost player|<dark_aqua>Click!]><gray> - View or edit player information" targets:<player>
+          - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>/toutpost start|toutpost start|<dark_aqua>Click!]><gray> - Create a capturable outpost" targets:<player>
+          #- ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<aqua>START|toutpost start|<aqua>/Click this to start creating a new Outpost]> <dark_aqua>location finder." targets:<player>
+
+
