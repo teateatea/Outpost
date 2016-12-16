@@ -1,1 +1,3 @@
 # Outpost
+
+Capturable outposts
