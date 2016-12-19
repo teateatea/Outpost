@@ -9,6 +9,8 @@
    # Only players flagged TeaOutpostBypass:true have access to /toutpost.
 
 
+
+TeaOutpost_PlayerCommand:
    # ----- ----- ----- ----- ----- 
    # COMMANDS: /outpost
    ## HERE
@@ -44,8 +46,6 @@
    # lookup
    # default
    # ----- ----- ----- ----- ----- 
-
-TeaOutpost_PlayerCommand:
     type: command
     debug: true
     name: outpost
@@ -58,9 +58,12 @@ TeaOutpost_PlayerCommand:
       targetlist: ALL|TEAM|ENEMY|NONE
     script:
       - choose <context.args.first||default>:
-   ## HERE ---
+
+   ## HERE ---(Check information about the Outpost at <player>'s location)
         - case here:
+          # IF (ANY OF THE CUBOIDS AT <player>'S LOCATION MATCH TEAOUTPOSTLIST) OR (PLAYER IS IN A TOWN) {
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
+            # FOREACH (CUBOIDS AT PLAYER LOCATION) {
             - foreach <player.location.cuboids||li@> {
               - if <server.flag[TeaOutpostList].as_list.contains_any[%value%]||false> == true {
                 - define CuboidName <def[value].replace[cu@].with[]>
@@ -163,6 +166,7 @@ TeaOutpost_PlayerCommand:
              #   - ^narrate "<proc[msgCommand].context[<dark_aqua><&lt><&lt> RETURN TO OUTPOST LIST|toutpost list|<dark_aqua>Return to Outpost List]>" targets:<player>
                 }
             }
+            # ELSE (NONE OF THE CUBOIDS FOR THE PLAYERS LOCATION MATCH TEAOUTPOSTLIST, AND THE PLAYER IS NOT IN A TOWN) { NARRATE "SORRY NO OUTPOST HERE" }
             else {
               - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
               }
@@ -1545,6 +1549,9 @@ TeaOutpost_PlayerCommand:
       }
 
 
+
+
+TeaOutpost_Command:
    # ----- ----- ----- ----- ----- 
    # COMMANDS: /toutpost
    # cancel
@@ -1576,8 +1583,6 @@ TeaOutpost_PlayerCommand:
    # lookup
    # default
    # ----- ----- ----- ----- ----- 
-
-TeaOutpost_Command:
     type: command
     debug: false
     name: toutpost
