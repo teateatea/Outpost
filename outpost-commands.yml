@@ -90,7 +90,7 @@ TeaOutpost_PlayerCommand:
                 }
               - define CuboidName <def[NearestOutpost]||Next>
               }
-            - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
+           # - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
             - if %CuboidName% == Next {
               - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<aqua>View Outpost List?|outpost list|<aqua>This will show you a list of all Outposts.]>" targets:<player>
               }
@@ -118,6 +118,7 @@ TeaOutpost_PlayerCommand:
                #   - ^narrate "" targets:<player>
                   - ^narrate "<proc[msgHover].context[<gold><bold><&lb>OUTPOST<&rb> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>| <gray>ID<&co> <gray><def[ManageName].to_uppercase> ]>" targets:<player>
                   - if <player.flag[TeaOutpostKingPass]||false> != true && <player.flag[TeaOutpostBypass]||false> != true && <player.flag[Tea%ManageName%Pass]||false> != true {
+                  # NARRATE TO PLAYERS THAT DO NOT HAVE ANY OF THE ABOVE PASSES (KINGPASS, BYPASS, OUTPOSTPASS)
                     - ^narrate "<proc[msgCommand].context[<dark_aqua> <&gt> Current Town Owner<&co> <%TownOwnerStuff%><server.flag[%TownOwnerStuff%DisplayName]||Wild> (<server.flag[%InfluenceName%InfluencePoints%TownOwnerStuff%].round||00> IP)|outpost influence %InfluenceName%|<%TownOwnerStuff%> <&gt> Click to view influence board ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + Current Influencer<&co> <white><server.flag[%OwnerStuff%DisplayName]||Wild> / <%OwnerStuff%>%OwnerStuff% <white>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary%| <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild><gray> is the current owner. <&nl> <%OwnerStuff%>%OwnerStuff% <gray>is their Team Colour. <&nl> <%OwnerStuffSecondary%>%OwnerStuffSecondary%<gray> is a Personal Colour. ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Training Time<&co> <white>%TrainingTime%| <gray>Visit this Outpost at %TrainingTime% for<&co> <&nl> <dark_aqua>+1 Experience Level <&nl> <gray>+1 <server.flag[%ManageName%TrainingFocus]||None> Level (if Minecraft Level 30) <&nl> <dark_aqua>+20 minutes of <server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||Nothing> (if Minecraft Level 60) ]>" targets:<player>
