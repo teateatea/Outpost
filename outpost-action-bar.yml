@@ -1,0 +1,464 @@
+   # BAR127PROC CREATES BARS
+   # This procedure takes any integer x (up to 127) and returns x bars.
+   # <proc[Bar127Proc].context[<x>]>
+   # For integers greater than 127, please use Bar255Proc.
+
+"Bar127Proc":
+  type: procedure
+  debug: false
+  script:
+  # Save "PermanentBarCount" as the original integer provided.
+  # Save "BarCount" as the original integer as well. This will be our working definition.
+    - define PermanentBarCount <def[1]>
+    - define BarCount <def[PermanentBarCount]>
+  # - IF "Barcount" is GREATER THAN OR EQUAL TO 64,
+  #   - Save "Bars" as "64 Pipes"
+  #   - Subtract 64 from "BarCount"
+  # 64 ----- ----- -----
+    - ^if <def[BarCount]> >= 64 {
+      - ^define Bars ||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      - ^define BarCount <def[BarCount].sub[64].round>
+    }
+  # - IF "BarCount" is GREATER THAN OR EQUAL TO 32,
+  #   - IF "PermanentBarCount" is GREATER THAN OR EQUAL TO 64,
+  #     - Save "Bars" as "All previous pipes plus 32 more pipes"
+  #   - ELSE,
+  #     - Save "Bars" as "32 Pipes"
+  #   - Subtract 32 from "BarCount"
+  # 32 ----- ----- -----
+    - ^if <def[BarCount]> >= 32 {
+      - ^if <def[PermanentBarCount]> >= 64 {
+        - ^define Bars <def[Bars]||>||||||||||||||||||||||||||||||||
+        }
+        else {
+          - ^define Bars ||||||||||||||||||||||||||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[32].round>
+    }
+  # Same as above.
+  # 16 ----- ----- -----
+    - ^if <def[BarCount]> >= 16 {
+      - ^if <def[PermanentBarCount]> >= 32 {
+        - ^define Bars <def[Bars]||>||||||||||||||||
+        }
+        else {
+          - ^define Bars ||||||||||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[16].round>
+    }
+
+  # Same as above.
+  # 8 ----- ----- -----
+    - ^if <def[BarCount]> >= 8 {
+      - ^if <def[PermanentBarCount]> >= 16 {
+        - ^define Bars <def[Bars]||>||||||||
+        }
+        else {
+          - ^define Bars ||||||||
+          }      
+      - ^define BarCount <def[BarCount].sub[8].round>
+    }
+
+  # Same as above.
+  # 4 ----- ----- -----
+    - ^if <def[BarCount]> >= 4 {
+      - ^if <def[PermanentBarCount]> >= 8 {
+        - ^define Bars <def[Bars]||>||||
+        }
+        else {
+          - ^define Bars ||||
+          }      
+      - ^define BarCount <def[BarCount].sub[4].round>
+    }
+  # Same as above.
+  # 2 ----- ----- -----
+    - ^if <def[BarCount]> >= 2 {
+      - ^if <def[PermanentBarCount]> >= 4 {
+        - ^define Bars <def[Bars]||>||
+        }
+        else {
+          - ^define Bars ||
+          }      
+      - ^define BarCount <def[BarCount].sub[2].round>
+    }
+  # Same as above.
+  # 1 ----- ----- -----
+    - ^if <def[BarCount]> >= 1 {
+      - ^if <def[PermanentBarCount]> >= 2 {
+        - ^define Bars <def[Bars]||>|
+        }
+        else {
+          - ^define Bars |
+          }      
+    }
+  # Return "Bars"
+    - determine <def[Bars]||>
+
+    
+    # -----------------------------
+    
+"ActionBarHandler":
+  type: task
+  debug: false
+  script:
+      - ^adjust <player> action_bar:<%AttackColour%><bold><def[PointHealthBars]||>[<&sp><server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0><%AttackColourSecondary%>/<%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColour%><&sp>]<def[PointHealthBars]||>
+
+
+"DefendingActionBarHandler":
+  type: task
+  debug: false
+  script:
+
+    - ^define PointMaxHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^define PointResetHealth <server.flag[CTPPointResetHealth<def[1]>]||0>
+    - ^define ObsidianDamage <def[PointResetHealth].sub[<def[PointMaxHealth]>]||0>
+    - ^define CaptureDamage <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>]||0>
+    - ^define PostDamageHealth <def[PointResetHealth].sub[<def[ObsidianDamage]>].sub[<def[CaptureDamage]>]||0>
+    - ^define ObsidianDamagePercentage <def[ObsidianDamage].div[<def[PointResetHealth]>].mul[100]>
+    - ^define CaptureDamagePercentage <def[CaptureDamage].div[<def[PointResetHealth]>].mul[100].round_up>
+    - ^define PostDamageHealthPercentage <def[PostDamageHealth].div[<def[PointResetHealth]>].mul[100].round_down>
+    - ^define CapturingPlayerCount <def[AttackCount]||0>
+    - ^define BlockingPlayerCount <def[BlockCount]||0>
+
+  #  - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].trim>
+    - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].replace[regex:^.].with[<&pipe><&dot>].trim>
+  #  - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+ #   - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+  #  - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+    - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].trim>
+    - ^define CapturingPlayerBars <proc[Bar127Proc].context[<def[CapturingPlayerCount]>]>
+    - ^define BlockingPlayerBars <proc[Bar127Proc].context[<def[BlockingPlayerCount]>]>
+
+ #   - ^define PreCaptureCount <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].sub[<def[AttackCount]||0>].add[<def[ObsidianDamage]>]||0>
+ #   - ^define CaptureCount <def[PreCaptureCount].div[%PointResetHealth%].mul[100].round_down>
+ #   - ^define PermanentCaptureCount %CaptureCount%
+ #   - ^define PermanentCapturingPlayerCount %CapturingPlayerCount%
+    - define TeamTag <server.flag[%AttackColour%DisplayNameTag]||WLD>
+    
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+      - ^define ActionBarLeft <%OwnerColourSecondary%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%OwnerColourSecondary%><bold><&rb><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColourSecondary%><bold><&lb><gray><bold><def[ObsidianDamageBars]><%OwnerColourSecondary%><bold><&rb>-
+    #  - ^define ActionBarOnePipeSpace <def[ActionBarOne].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOnePipeSpace].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOne].split[regex:.].limit[10]>
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColourSecondary%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%AttackColourSecondary%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><&sp><%AttackColourSecondary%><bold>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColourSecondary%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%OwnerColourSecondary%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%OwnerColourSecondary%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+      - ^define ActionBarLeft <%OwnerColour%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%OwnerColour%><bold><&rb><%AttackColour%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColour%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><%OwnerColour%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColour%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><&lb><gray><bold><def[ObsidianDamageBars]><%OwnerColour%><bold><&rb>-
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColour%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColour%><bold><%AttackColour%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><%AttackColour%><bold><&sp>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColour%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%OwnerColour%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%OwnerColour%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.9
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define CapturingPlayerCountBars ''
+    - ^define CaptureCountBars ''
+    - ^define RemainderCountBars ''
+    - ^define BlockingPlayerCountBars ''
+   # - ^define ObsidianDamageBars ''
+
+
+
+"CapturingActionBarHandler":
+  type: task
+  debug: false
+  script:
+ 
+    - ^define PointMaxHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^define PointResetHealth <server.flag[CTPPointResetHealth<def[1]>]||0>
+    - ^define ObsidianDamage <def[PointResetHealth].sub[<def[PointMaxHealth]>]||0>
+    - ^define CaptureDamage <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>]||0>
+    - ^define PostDamageHealth <def[PointResetHealth].sub[<def[ObsidianDamage]>].sub[<def[CaptureDamage]>]||0>
+    - ^define ObsidianDamagePercentage <def[ObsidianDamage].div[<def[PointResetHealth]>].mul[100]>
+    - ^define CaptureDamagePercentage <def[CaptureDamage].div[<def[PointResetHealth]>].mul[100].round_up>
+    - ^define PostDamageHealthPercentage <def[PostDamageHealth].div[<def[PointResetHealth]>].mul[100].round_down>
+    - ^define CapturingPlayerCount <def[AttackCount]||0>
+    - ^define BlockingPlayerCount <def[BlockCount]||0>
+
+  #  - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].trim>
+    - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].replace[regex:^.].with[<&pipe><&dot>].trim>
+  #  - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+  #  - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+    - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].trim>
+    - ^define CapturingPlayerBars <proc[Bar127Proc].context[<def[CapturingPlayerCount]>]>
+    - ^define BlockingPlayerBars <proc[Bar127Proc].context[<def[BlockingPlayerCount]>]>
+
+ #   - ^define PreCaptureCount <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].sub[<def[AttackCount]||0>].add[<def[ObsidianDamage]>]||0>
+ #   - ^define CaptureCount <def[PreCaptureCount].div[%PointResetHealth%].mul[100].round_down>
+ #   - ^define PermanentCaptureCount %CaptureCount%
+ #   - ^define PermanentCapturingPlayerCount %CapturingPlayerCount%
+    - define TeamTag <server.flag[%AttackColour%DisplayNameTag]||WLD>
+    
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+      - ^define ActionBarLeft <%AttackColourSecondary%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><%AttackColour%><bold><def[CaptureDamageBars]><def[TeamTag]><%AttackColourSecondary%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&rb>-
+    #  - ^define ActionBarOnePipeSpace <def[ActionBarOne].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOnePipeSpace].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOne].split[regex:.].limit[10]>
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColourSecondary%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%AttackColourSecondary%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><&sp><%AttackColourSecondary%><bold>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColourSecondary%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColourSecondary%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColourSecondary%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+      - ^define ActionBarLeft <%AttackColour%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColour%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><def[CaptureDamageBars]><def[TeamTag]><%AttackColour%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&rb>-
+
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColour%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColour%><bold><%AttackColour%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><%AttackColour%><bold><&sp>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColour%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColour%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColour%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.9
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define CapturingPlayerCountBars ''
+    - ^define CaptureCountBars ''
+    - ^define RemainderCountBars ''
+    - ^define BlockingPlayerCountBars ''
+   # - ^define ObsidianDamageBars ''
+
+
+
+"RevertingActionBarHandler":
+  type: task
+  debug: false
+  script:
+    - ^define PointMaxHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^define PointResetHealth <server.flag[CTPPointResetHealth<def[1]>]||0>
+    - ^define ObsidianDamage <def[PointResetHealth].sub[<def[PointMaxHealth]>]||0>
+    - ^define CaptureDamage <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>]||0>
+    - ^define PostDamageHealth <def[PointResetHealth].sub[<def[ObsidianDamage]>].sub[<def[CaptureDamage]>]||0>
+    - ^define ObsidianDamagePercentage <def[ObsidianDamage].div[<def[PointResetHealth]>].mul[100]>
+    - ^define CaptureDamagePercentage <def[CaptureDamage].div[<def[PointResetHealth]>].mul[100].round_up>
+    - ^define PostDamageHealthPercentage <def[PostDamageHealth].div[<def[PointResetHealth]>].mul[100].round_down>
+    - ^define CapturingPlayerCount <def[AttackCount]||0>
+    - ^define BlockingPlayerCount <def[BlockCount]||0>
+
+  #  - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].trim>
+    - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].replace[regex:^.].with[<&pipe><&dot>].trim>
+  #  - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+  #  - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+    - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].trim>
+    - ^define CapturingPlayerBars <proc[Bar127Proc].context[<def[CapturingPlayerCount]>]>
+    - ^define BlockingPlayerBars <proc[Bar127Proc].context[<def[BlockingPlayerCount]>]>
+
+ #   - ^define PreCaptureCount <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].sub[<def[AttackCount]||0>].add[<def[ObsidianDamage]>]||0>
+ #   - ^define CaptureCount <def[PreCaptureCount].div[%PointResetHealth%].mul[100].round_down>
+ #   - ^define PermanentCaptureCount %CaptureCount%
+ #   - ^define PermanentCapturingPlayerCount %CapturingPlayerCount%
+    - define TeamTag <server.flag[%AttackColour%DisplayNameTag]||WLD>
+    
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+      - ^define ActionBarLeft <%AttackColourSecondary%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><%AttackColour%><bold><def[CaptureDamageBars]><def[TeamTag]><%AttackColourSecondary%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&rb>-
+    #  - ^define ActionBarOnePipeSpace <def[ActionBarOne].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOnePipeSpace].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOne].split[regex:.].limit[10]>
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColourSecondary%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%AttackColourSecondary%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><&sp><%AttackColourSecondary%><bold>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColourSecondary%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColourSecondary%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColourSecondary%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+      - ^define ActionBarLeft <%AttackColour%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColour%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><def[CaptureDamageBars]><def[TeamTag]><%AttackColour%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&rb>-
+
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColour%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColour%><bold><%AttackColour%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><%AttackColour%><bold><&sp>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColour%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColour%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColour%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.9
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define CapturingPlayerCountBars ''
+    - ^define CaptureCountBars ''
+    - ^define RemainderCountBars ''
+    - ^define BlockingPlayerCountBars ''
+   # - ^define ObsidianDamageBars ''
+	
+
+"NeutralActionBarHandler":
+  type: task
+  debug: false
+  script:
+ 
+    - ^define PointMaxHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^define PointResetHealth <server.flag[CTPPointResetHealth<def[1]>]||0>
+    - ^define ObsidianDamage <def[PointResetHealth].sub[<def[PointMaxHealth]>]||0>
+    - ^define CaptureDamage <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>]||0>
+    - ^define PostDamageHealth <def[PointResetHealth].sub[<def[ObsidianDamage]>].sub[<def[CaptureDamage]>]||0>
+    - ^define ObsidianDamagePercentage <def[ObsidianDamage].div[<def[PointResetHealth]>].mul[100]>
+    - ^define CaptureDamagePercentage <def[CaptureDamage].div[<def[PointResetHealth]>].mul[100].round_up>
+    - ^define PostDamageHealthPercentage <def[PostDamageHealth].div[<def[PointResetHealth]>].mul[100].round_down>
+    - ^define CapturingPlayerCount <def[AttackCount]||0>
+    - ^define BlockingPlayerCount <def[BlockCount]||0>
+
+  #  - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].trim>
+    - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&pipe>].replace[regex:^.].with[<&pipe><&dot>].trim>
+  #  - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    - ^define CaptureDamageBars <proc[Bar127Proc].context[<def[CaptureDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+  #  - ^define ObsidianDamageBars <proc[Bar127Proc].context[<def[ObsidianDamagePercentage]>].replace[<&pipe>].with[<&dot>].trim>
+    - ^define PostDamageHealthBars <proc[Bar127Proc].context[<def[PostDamageHealthPercentage]>].trim>
+    - ^define CapturingPlayerBars <proc[Bar127Proc].context[<def[CapturingPlayerCount]>]>
+    - ^define BlockingPlayerBars <proc[Bar127Proc].context[<def[BlockingPlayerCount]>]>
+
+ #   - ^define PreCaptureCount <server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].sub[<def[AttackCount]||0>].add[<def[ObsidianDamage]>]||0>
+ #   - ^define CaptureCount <def[PreCaptureCount].div[%PointResetHealth%].mul[100].round_down>
+ #   - ^define PermanentCaptureCount %CaptureCount%
+ #   - ^define PermanentCapturingPlayerCount %CapturingPlayerCount%
+    - define TeamTag <server.flag[%AttackColour%DisplayNameTag]||WLD>
+    
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+      - ^define ActionBarLeft <%AttackColourSecondary%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><%OwnerColourSecondary%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColourSecondary%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><%AttackColour%><bold><def[CaptureDamageBars]><def[TeamTag]><%AttackColourSecondary%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColourSecondary%><bold><&rb>-
+    #  - ^define ActionBarOnePipeSpace <def[ActionBarOne].replace[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe>].with[<&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&pipe><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOnePipeSpace].replace[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot>].with[<&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&dot><&sp>].trim>
+    #  - ^define ActionBarOnePost <def[ActionBarOne].split[regex:.].limit[10]>
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColourSecondary%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%AttackColourSecondary%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><&sp><%AttackColourSecondary%><bold>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColourSecondary%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColourSecondary%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColourSecondary%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+      - ^define ActionBarLeft <%AttackColour%><bold>-<&lb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&lb><%AttackColour%><bold><def[TeamTag]><def[CaptureDamageBars]><def[CapturingPlayerBars].replace[<&pipe>].with[<&gt>]><%OwnerColour%><bold><def[BlockingPlayerBars].replace[<&pipe>].with[<&lt>]><%OwnerColour%><bold><def[PostDamageHealthBars]>
+      - ^define ActionBarRight <%OwnerColour%><bold><def[PostDamageHealthBars]><def[BlockingPlayerBars].replace[<&pipe>].with[<&gt>]><%AttackColour%><bold><def[CapturingPlayerBars].replace[<&pipe>].with[<&lt>]><def[CaptureDamageBars]><def[TeamTag]><%AttackColour%><bold><&rb><gray><bold><def[ObsidianDamageBars]><%AttackColour%><bold><&rb>-
+
+     # - ^adjust <def[2].list_players> action_bar:<%AttackColour%><bold>-[<%AttackColour%><def[PermanentCaptureCount]><bold><def[CaptureCountBars]||><def[TeamTag]><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColour%><bold><%AttackColour%><bold>[<&sp><%AttackColour%><bold><def[RealRemainderCount].round||0><%AttackColour%><bold><&sp>]<%OwnerColour%><bold><def[RemainderCountBars]||><%OwnerColourSecondary%><bold><def[BlockingPlayerCountBars].replace[<&pipe>].with[<&gt>]||><%AttackColourSecondary%><bold><def[CapturingPlayerCountBars].replace[<&pipe>].with[<&lt>]||><%AttackColour%><bold><def[TeamTag]><def[CaptureCountBars]||><%AttackColour%><bold>]-
+      - ^adjust <def[2].list_players> action_bar:<def[ActionBarLeft]><%AttackColour%><bold><&lb><&sp><%OwnerColour%><bold><def[PostDamageHealth].round><&sp><%AttackColour%><bold><&rb><def[ActionBarRight]>
+      - playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.9
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define CapturingPlayerCountBars ''
+    - ^define CaptureCountBars ''
+    - ^define RemainderCountBars ''
+    - ^define BlockingPlayerCountBars ''
+   # - ^define ObsidianDamageBars ''
+
+"SuccessfulCaptureActionBarHandler":
+  type: task
+  debug: false
+  script:
+    - ^define PointHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^if <def[PointHealth]> >= 64 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-64>
+    }
+    - ^if <def[PointHealth]> >= 32 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-32>
+    }
+    - ^if <def[PointHealth]> >= 16 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-16>
+    }
+    - ^if <def[PointHealth]> >= 8 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-8>
+    }
+    - ^if <def[PointHealth]> >= 4 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-4>
+    }
+    - ^if <def[PointHealth]> >= 2 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-2>
+    }
+    - ^if <def[PointHealth]> >= 1 {
+      - ^define PointHealthBars <def[PointHealthBars]||>|
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-1>
+    }
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+     # - playsound <def[2].center> sound:note_bass volume:<math:0.5+0.2*<def[BlockCount]||0>> pitch:<math:0.5+0.1*<def[BlockCount]||0>>
+    #  - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColour%><bold><def[PointHealthBars]||>
+     # - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColour%><bold>[<&sp><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColour%><bold><&sp>]<def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%AttackColourSecondary%><bold>-[<%AttackColour%><bold><def[PointHealthBars]||><%AttackColourSecondary%><bold>[<&sp><bold><def[AttackColour].to_uppercase||GRAY><%AttackColourSecondary%><bold><&sp>]<%AttackColour%><bold><def[PointHealthBars]||><%AttackColourSecondary%><bold>]-
+
+      #- title subtitle:<%OwnerColourSecondary%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColourSecondary%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+     # - ^adjust <player> action_bar:<%OwnerColourSecondary%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColourSecondary%><bold><def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%AttackColour%><bold>-[<%AttackColourSecondary%><bold><def[PointHealthBars]||><%AttackColour%><bold>[<&sp><%AttackColour%><bold><def[AttackColour].to_uppercase||GRAY><%AttackColour%><bold><&sp>]<%AttackColourSecondary%><bold><def[PointHealthBars]||><%AttackColour%><bold>]-
+
+      #- playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.1
+     # - title subtitle:<%OwnerColour%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColour%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define PointHealthBars <&sp>
+
+
+"SuccessfulSwitchActionBarHandler":
+  type: task
+  debug: false
+  script:
+    - ^define PointHealth <server.flag[CTPPointHealth<def[1]>]||0>
+    - ^if <def[PointHealth]> >= 64 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-64>
+    }
+    - ^if <def[PointHealth]> >= 32 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-32>
+    }
+    - ^if <def[PointHealth]> >= 16 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-16>
+    }
+    - ^if <def[PointHealth]> >= 8 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-8>
+    }
+    - ^if <def[PointHealth]> >= 4 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-4>
+    }
+    - ^if <def[PointHealth]> >= 2 {
+      - ^define PointHealthBars <def[PointHealthBars]||>||
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-2>
+    }
+    - ^if <def[PointHealth]> >= 1 {
+      - ^define PointHealthBars <def[PointHealthBars]||>|
+      - ^define PointHealth <math.as_int:<def[PointHealth]>-1>
+    }
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+     # - playsound <def[2].center> sound:note_bass volume:<math:0.5+0.2*<def[BlockCount]||0>> pitch:<math:0.5+0.1*<def[BlockCount]||0>>
+    #  - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColour%><bold><def[PointHealthBars]||>
+     # - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColour%><bold>[<&sp><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColour%><bold><&sp>]<def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%OwnerColourSecondary%><bold>-[<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold>SWITCHING<%OwnerColourSecondary%><bold><&sp>]<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>]-
+
+      #- title subtitle:<%OwnerColourSecondary%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColourSecondary%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+     # - ^adjust <player> action_bar:<%OwnerColourSecondary%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColourSecondary%><bold><def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%OwnerColour%><bold>-[<%OwnerColourSecondary%><bold><def[PointHealthBars]||><%OwnerColour%><bold>[<&sp><%OwnerColour%><bold>SWITCHING<%OwnerColour%><bold><&sp>]<%OwnerColourSecondary%><bold><def[PointHealthBars]||><%OwnerColour%><bold>]-
+
+      #- playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.1
+     # - title subtitle:<%OwnerColour%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColour%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define PointHealthBars <&sp>
+
+"SuccessfulSwitchActionBarHandler2":
+  type: task
+  debug: false
+  script:
+    - ^if <server.flag[<def[1]>musiccount]||1> == 1 {
+     # - playsound <def[2].center> sound:note_bass volume:<math:0.5+0.2*<def[BlockCount]||0>> pitch:<math:0.5+0.1*<def[BlockCount]||0>>
+    #  - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColour%><bold><def[PointHealthBars]||>
+     # - ^adjust <player> action_bar:<%OwnerColour%><bold><def[PointHealthBars]||><%OwnerColour%><bold>[<&sp><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColour%><bold><&sp>]<def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%OwnerColourSecondary%><bold>-[<&sp><bold>SWITCHING<%OwnerColourSecondary%><bold><&sp>]-
+
+      #- title subtitle:<%OwnerColourSecondary%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColourSecondary%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:2
+    }
+    else {
+     # - ^adjust <player> action_bar:<%OwnerColourSecondary%><bold><def[PointHealthBars]||><%OwnerColourSecondary%><bold>[<&sp><bold><server.flag[CTPPointHealth<def[1]>]||0><%OwnerColourSecondary%><bold><&sp>]<%OwnerColourSecondary%><bold><def[PointHealthBars]||>
+      - ^adjust <def[2].list_players> action_bar:<%OwnerColour%><bold>-[<&sp><%OwnerColour%><bold>SWITCHING<%OwnerColour%><bold><&sp><%OwnerColour%><bold>]-
+
+      #- playsound <def[2].center> sound:note_bass volume:0.5 pitch:1.1
+     # - title subtitle:<%OwnerColour%>-[<&sp><%OwnerColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%OwnerColour%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+      - ^flag global <def[1]>musiccount:1
+    }
+    - ^define PointHealthBars <&sp>

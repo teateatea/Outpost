@@ -1,0 +1,513 @@
+#16-01-07
+"PlayerHealTask":
+  type: task
+  debug: false
+  script:
+  - ^heal <def[1].list_players>
+  - ^feed <def[1].list_players>
+  - ^adjust <def[1].list_players> fire_time:0t
+  - ^playeffect <def[1].list_players.parse[location]> effect:happy_villager quantity:10
+  - announce "<gray><bold>PlayerHealTask<gray>: Healed, fed and extinguished <def[1].list_players.parse[name].replace[li@].with[].replace[|].with[,<&sp>]>: <def[2]>" to_flagged:NoonLightDiagnostic
+
+
+
+"CPSchematicTask":
+  type: task
+  debug: false
+  script:
+  - if <server.flag[<def[2]>schematiclist].as_list.size||0> < 1 {
+    - announce "<gray><bold>CPSchematicTask<gray>: <yellow>Schematic list needs CP.<def[2]>.<def[3]>! <gray><def[2]>.schematic.list" to_flagged:NoonLightDiagnostic
+    - queue clear
+  }
+  - if <server.flag[<def[2]>schematiclist].as_list.contains[CP<def[2]><def[3]>]||false> {
+    - if <server.flag[CP<def[2]><def[3]>].as_list.size||0> < 1 {
+      - announce "<gray><bold>CPSchematicTask<gray>: <yellow>Schematic colour list is empty! <gray>CP.<def[2]>.<def[3]>" to_flagged:NoonLightDiagnostic
+      - queue clear
+    }
+    - announce "<gray><bold>CPSchematicTask<gray>: Pasting <server.flag[CP<def[2]><def[3]>].as_list.replace[li@].with[].replace[|].with[,<&sp>]>: <def[2]>.schematic.list" to_flagged:NoonLightDiagnostic
+    - foreach <server.flag[CP<def[2]><def[3]>].as_list> {
+      - schematic load name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - schematic paste name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - schematic unload name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - announce "<gray>-> Pasted %value%: CP.<def[2]>.<def[3]>" to_flagged:NoonLightDiagnostic
+      - wait 1t
+    }
+
+
+  }
+  else {
+    - if <server.flag[<server.flag[<def[2]>schematiclist].as_list.first>].as_list.size||0> < 1 {
+      - announce "<gray><bold>CPSchematicTask<gray>: <yellow>Schematic colour list is empty! <gray><server.flag[<def[2]>schematiclist].as_list.first>" to_flagged:NoonLightDiagnostic
+      - queue clear
+    }
+    - define First <server.flag[<server.flag[<def[2]>schematiclist].as_list.first>].as_list>
+    - announce "<gray><bold>CPSchematicTask<gray>: Pasting <%First%.replace[li@].with[].replace[|].with[,<&sp>]>: <def[2]>.schematic.list" to_flagged:NoonLightDiagnostic
+    - foreach %First% {
+      - schematic load name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - schematic paste name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - schematic unload name:%value% <server.flag[ReplenishSchematic%value%].as_location>
+      - announce "<gray>-> Pasted %value%: <server.flag[<def[2]>schematiclist].as_list.first>" to_flagged:NoonLightDiagnostic
+
+      - wait 1t
+    }
+  }
+
+
+
+
+
+
+"StandardCaptureTask2":
+  type: task
+  debug: true
+  script:
+  - ^if <math.as_int:<server.flag[<server.flag[CurrentCapturerof<def[2]>]>Captureof<def[2]>].as_int||0>/2> == <math:<server.flag[<server.flag[CurrentCapturerof<def[2]>]>Captureof<def[2]>].as_int||0>/2> {
+    - title title:<def[5]>CAPTURED subtitle:<def[4]>-[<&sp><server.flag[CTPPointHealth<def[2]>]||0><def[5]>/<def[6]><server.flag[CTPPointHealth<def[2]>]||0><def[4]><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[1].list_players>
+    - playsound <def[1].center> sound:note_bass volume:0.5 pitch:2
+  }
+  else {
+    - playsound <def[1].center> sound:note_bass volume:0.5 pitch:2
+    - title title:<def[5]>CAPTURED subtitle:<def[5]>-[<&sp><def[4]><server.flag[CTPPointHealth<def[2]>]||0><def[5]>/<def[6]><server.flag[CTPPointHealth<def[2]>]||0><def[5]><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[1].list_players>
+  }
+  - wait 5t
+  - ^flag global Ownerof<def[2]>:<server.flag[CurrentCapturerof<def[2]>]>
+  - ^flag global Ownerof<def[2]>Secondary:<server.flag[CurrentCapturerof<def[2]>Secondary]>
+  - ^flag global <server.flag[CurrentCapturerof<def[2]>]>Captureof<def[2]>:0
+  - ^flag global CurrentCapturerof<def[2]>:Gray
+  - playsound <def[1].center> sound:note_bass volume:0.5 pitch:2
+  - title title:<def[4]>CAPTURED subtitle:<def[5]>-[<&sp><def[4]><server.flag[CTPPointHealth<def[2]>]||0><def[5]>/<def[6]><server.flag[CTPPointHealth<def[2]>]||0><def[5]><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[1].list_players>
+  - wait 5t
+  - playsound <def[1].center> sound:note_bass volume:0.5 pitch:2
+  - title title:<def[5]>CAPTURED subtitle:<def[5]>-[<&sp><def[4]><server.flag[CTPPointHealth<def[2]>]||0><def[5]>/<def[6]><server.flag[CTPPointHealth<def[2]>]||0><def[5]><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[1].list_players>
+
+"StandardCaptureTask1":
+  type: task
+  debug: true
+  script:
+  - ^inject SuccessfulCaptureActionBarHandler
+
+  - ^if <math.as_int:<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>/2> == <math:<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>/2> {
+    - title title:<%AttackColourSecondary%>CAPTURED subtitle:<%AttackColour%>-[<&sp><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%>/<%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColour%><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  }
+  else {
+    - title title:<%AttackColourSecondary%>CAPTURED subtitle:<%AttackColourSecondary%>-[<&sp><%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%>/<%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  }
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+
+  - wait 5t
+  # - run CPHealthCurrentTask instantly def:<def[TotalBlockInt]||0>|<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>|<server.flag[CTPPointHealth<def[1]>]||100>|<server.flag[CurrentCapturerof<def[1]>]||Green>|<server.flag[Ownerof<def[1]>]||Gray>|<def[AttackCount]||0>|<def[BlockCount]||0>|<server.flag[CurrentCapturerof<def[1]>Secondary]||Dark_Gray>|<server.flag[Ownerof<def[1]>Secondary]||Dark_Gray>|<def[2].list_players>
+  - ^flag global Ownerof<def[1]>:<server.flag[CurrentCapturerof<def[1]>]>
+  - ^flag global Ownerof<def[1]>Secondary:<server.flag[CurrentCapturerof<def[1]>Secondary]>
+  # - announce "<server.flag[CurrentCapturerof<def[1]>]> have captured <def[1]>"
+  - ^flag global <server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>:0
+  - ^flag global CurrentCapturerof<def[1]>:Gray
+  #  - run CPHealthCaptureTask instantly def:<def[TotalBlockInt]||0>|<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>|<server.flag[CTPPointHealth<def[1]>]||100>|<server.flag[CurrentCapturerof<def[1]>]||Green>|<server.flag[Ownerof<def[1]>]||Gray>|<def[AttackCount]||0>|<def[BlockCount]||0>|<server.flag[CurrentCapturerof<def[1]>Secondary]||Dark_Gray>|<server.flag[Ownerof<def[1]>Secondary]||Dark_Gray>|<def[2].list_players.replace[li@].with[]>
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+  - title title:<%AttackColour%>CAPTURED subtitle:<%AttackColourSecondary%>-[<&sp><%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%>/<%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - wait 5t
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+  - title title:<%AttackColourSecondary%>CAPTURED subtitle:<%AttackColourSecondary%>-[<&sp><%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%>/<%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><%AttackColourSecondary%><&sp>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - announce "<gray><bold>StandardCaptureTask<gray>: <%AttackColourSecondary%><&lb><%AttackColour%>CAPTURED<%AttackColourSecondary%><&rb><gray>: <def[1]>" to_flagged:NoonLightDiagnostic
+
+"StandardCaptureTask":
+  type: task
+  debug: false
+  script:
+  - ^inject SuccessfulCaptureActionBarHandler
+  - ^title subtitle:<%AttackColour%><bold>CAPTURED fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+  - wait 1t
+
+  - ^inject SuccessfulCaptureActionBarHandler
+  - ^title subtitle:<%AttackColourSecondary%><bold>CAPTURED fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+  - wait 1t
+
+  - ^inject SuccessfulCaptureActionBarHandler
+  - ^title subtitle:<%AttackColour%><bold>CAPTURED fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - playsound <def[2].center> sound:note_bass volume:0.5 pitch:2
+
+
+  - ^flag global Ownerof<def[1]>:<server.flag[CurrentCapturerof<def[1]>]>
+  - ^flag global Ownerof<def[1]>Secondary:<server.flag[CurrentCapturerof<def[1]>Secondary]>
+  - ^flag global <server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>:0
+  - ^flag global CurrentCapturerof<def[1]>:Gray
+
+  - ^announce "<gray><bold>StandardCaptureTask<gray>: <%AttackColourSecondary%><&lb><%AttackColour%>CAPTURED<%AttackColourSecondary%><&rb><gray>: <def[1]>" to_flagged:NoonLightDiagnostic
+
+
+"TeamSwitchTask":
+  type: task
+  debug: false
+  script:
+  - foreach <def[2].list_players> {
+    - ^flag %value% RaceColour:%OwnerColour%
+    - ^flag %value% RaceColourSecondary:%OwnerColourSecondary%
+    - ^team name:%OwnerColour% add:%value% prefix:<%OwnerColour%>
+  }
+
+  # - run CPHealthCurrentTask instantly def:<def[TotalBlockInt]||0>|<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>|<server.flag[CTPPointHealth<def[1]>]||100>|<server.flag[CurrentCapturerof<def[1]>]||Green>|<server.flag[Ownerof<def[1]>]||Gray>|<def[AttackCount]||0>|<def[BlockCount]||0>|<server.flag[CurrentCapturerof<def[1]>Secondary]||Dark_Gray>|<server.flag[Ownerof<def[1]>Secondary]||Dark_Gray>|<def[2].list_players>
+ # - ^flag global Ownerof<def[1]>:Blue
+ # - ^flag global Ownerof<def[1]>Secondary:Dark_Blue
+  # - announce "<server.flag[CurrentCapturerof<def[1]>]> have captured <def[1]>"
+  - ^flag global <server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>:0
+  - ^flag global CurrentCapturerof<def[1]>:Gray
+  - ^announce "<gray><bold>TeamSwitchTask<gray>: <%OwnerColourSecondary%><&lb><%OwnerColour%>Switching<%OwnerColourSecondary%><&rb><gray> <def[2].list_players.parse[name].replace[li@].with[].replace[|].with[,<&sp>]>: <def[1]>" to_flagged:NoonLightDiagnostic
+
+  #  - run CPHealthCaptureTask instantly def:<def[TotalBlockInt]||0>|<server.flag[<server.flag[CurrentCapturerof<def[1]>]>Captureof<def[1]>].as_int||0>|<server.flag[CTPPointHealth<def[1]>]||100>|<server.flag[CurrentCapturerof<def[1]>]||Green>|<server.flag[Ownerof<def[1]>]||Gray>|<def[AttackCount]||0>|<def[BlockCount]||0>|<server.flag[CurrentCapturerof<def[1]>Secondary]||Dark_Gray>|<server.flag[Ownerof<def[1]>Secondary]||Dark_Gray>|<def[2].list_players.replace[li@].with[]>
+  # - title title:<%AttackColour%>CAPTURED subtitle:<%AttackColourSecondary%>-[<&sp><%AttackColour%><server.flag[CTPPointHealth<def[1]>]||0><&sp><%AttackColourSecondary%>]- fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - ^inject SuccessfulSwitchActionBarHandler2
+  - ^title subtitle:<%OwnerColour%><bold>WELCOME<&sp>TO<&sp><def[OwnerColour].to_uppercase><&sp>TEAM fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - wait 5t
+  - ^inject SuccessfulSwitchActionBarHandler2
+  - ^title subtitle:<%OwnerColour%><bold>WELCOME<&sp>TO<&sp><def[OwnerColour].to_uppercase><&sp>TEAM fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+  - wait 5t
+  - ^inject SuccessfulSwitchActionBarHandler2
+  - ^title subtitle:<%OwnerColour%><bold>WELCOME<&sp>TO<&sp><def[OwnerColour].to_uppercase><&sp>TEAM fade_in:1t stay:30t fade_out:15t targets:<def[2].list_players>
+
+"PointAutoResetTask":
+  type: task
+  debug: false
+  script:
+  - ^flag global <server.flag[CurrentCapturerof<def[One]>]>Captureof<def[One]>:0
+  - ^flag global CurrentCapturerof<def[One]>:Gray
+
+"TeamHolographicDisplayResetTask":
+  type: task
+  debug: true
+  script:
+  - execute as_server "hd setline <server.flag[Ownerof<def[One]>||Red> 1 animation:<server.flag[Ownerof<def[One]>||Red>switch.txt"
+
+"TeamHolographicDisplaySwitchTask":
+  type: task
+  debug: true
+  script:
+  - execute as_server "hd setline <server.flag[Ownerof<def[One]>||Red> 1 animation:switching<server.flag[Ownerof<def[One]>||Red>.txt"
+
+
+CPCB2Respawns: 
+  type: world 
+  debug: false
+  events:
+    on player dies in CPCB2DeathRegion:
+    - ^flag <player> CP2.DiedInRegion:true
+
+    on player respawns:
+    - ^if <player.flag[CP2.DiedInRegion]||false> == true {
+      - ^if <player.flag[RaceColour]||White> == Blue {
+        - ^flag <player> CP2.DiedInRegion:!
+        - determine <server.flag[CPCB2RespawnBlue]>
+      }
+      else if <player.flag[RaceColour]||White> == Red {
+        - ^flag <player> CP2.DiedInRegion:!
+        - determine <server.flag[CPCB2RespawnRed]>
+      }
+      else if <player.flag[RaceColour]||White> == Yellow {
+        - ^flag <player> CP2.DiedInRegion:!
+        - determine <server.flag[CPCB2RespawnYellow]>
+      }
+      else {
+        - ^flag <player> CP2.DiedInRegion:!
+        - determine <server.flag[CPCB2RespawnWhite]>
+      }
+      - health <player> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+      - heal <player>
+      - flag <player> MaxHealthDamageCount:0
+    }
+
+    on player damaged in CPCB2DeathRegion:
+    - ^if <context.final_damage> >= <context.entity.health> {
+      - ^playsound <context.entity.location> sound:HURT_FLESH pitch:<util.random.decimal[0.9].to[1.3]>
+      - ^define CurrentHealth <context.entity.health.as_int||0>
+      - ^define CurrentMaxHealth <context.entity.health.max.as_int||20>
+     # - ^playsound <context.entity.location> sound:bat_takeoff pitch:<util.random.decimal[0.9].to[1.3]>
+      - ^if <context.entity.flag[RaceColour]||White> == Blue {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,11 quantity:200
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@blue_wool
+        - ^teleport <context.entity> <server.flag[CPCB2RespawnBlue]>
+        - ^adjust <context.entity> fire_time:0t
+        - ^execute as_server "effect <context.entity.name> clear"
+        - health <context.entity> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+        - ^heal <context.entity>
+        - ^feed <context.entity>
+        - flag <context.entity> MaxHealthDamageCount:0
+      }
+      else if <context.entity.flag[RaceColour]||White> == Red {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,14 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@red_wool
+        - ^teleport <context.entity> <server.flag[CPCB2RespawnRed]>
+        - ^adjust <context.entity> fire_time:0t
+        - ^execute as_server "effect <context.entity.name> clear"
+        - health <context.entity> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+        - ^heal <context.entity>
+        - ^feed <context.entity>
+        - flag <context.entity> MaxHealthDamageCount:0
+      }
+      else if <context.entity.flag[RaceColour]||White> == Yellow {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,4 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@yellow_wool
+        - teleport <context.entity> <server.flag[CPCB2RespawnYellow]>
+        - ^adjust <context.entity> fire_time:0t
+        - ^execute as_server "effect <context.entity.name> clear"
+        - health <context.entity> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+        - ^heal <context.entity>
+        - ^feed <context.entity>
+        - flag <context.entity> MaxHealthDamageCount:0
+      }
+      else {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,0 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@wool
+        - ^teleport <context.entity> <server.flag[CPCB2RespawnWhite]>
+        - ^adjust <context.entity> fire_time:0t
+        - ^execute as_server "effect <context.entity.name> clear"
+        - health <context.entity> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+        - ^heal <context.entity>
+        - ^feed <context.entity>
+        - flag <context.entity> MaxHealthDamageCount:0
+      }
+      - run DeathAnnouncement def:<context.entity.name||Player>|<context.entity.flag[RaceColour].to_lowercase||gray>|<context.entity.item_in_hand.display||<context.entity.item_in_hand.formatted.to_titlecase.replace[air].with[Nothing!]||Empty>>|<context.damager.name||Killer>|<context.damager.flag[RaceColour].to_lowercase||gray>|<context.damager.item_in_hand.display||<context.damager.item_in_hand.formatted.to_titlecase.replace[air].with[Nothing!]||Empty>>|<context.damager.health.as_int||20>|<context.damager.health.max.as_int||20>|<context.cause||null>|<context.damager.type||null>|<context.damager.item_in_hand.simple||i@air>|<context.damage.as_int||0>|%CurrentHealth%|%CurrentMaxHealth%|<math.as_int:%CurrentHealth%-<context.damage.as_int||0>> delay:1t
+      - determine CANCELLED
+    }
+    else if <context.final_damage> >= 4 && <context.entity.health.max> > 4 {
+      - ^playsound <context.entity.location> sound:zombie_infect pitch:<util.random.decimal[0.9].to[1.1]>
+      - wait 1t
+      - ^health <context.entity> <math.as_int:<context.entity.health.max>-2>
+      - ^flag <context.entity> MaxHealthDamageCount:++
+      - ^announce "<gray>Tea: Lowering health! <context.entity.name>:<context.entity.health.max.as_int||0>" to_flagged:DreamListener
+    }
+
+
+CPRespawns: 
+  type: world 
+  debug: true
+  events:
+    on player dies in CPCB1DeathRegion:
+    - ^flag <player> CP.DiedInRegion:true
+
+    on player respawns:
+    - ^if <player.flag[CP.DiedInRegion]||false> == true {
+      - ^if <player.flag[RaceColour]||White> == Blue {
+        - ^flag <player> CP.DiedInRegion:!
+        - determine <server.flag[CPCB1RespawnBlue]>
+      }
+      else if <player.flag[RaceColour]||White> == Red {
+        - ^flag <player> CP.DiedInRegion:!
+        - determine <server.flag[CPCB1RespawnRed]>
+      }
+      else if <player.flag[RaceColour]||White> == Yellow {
+        - ^flag <player> CP.DiedInRegion:!
+        - determine <server.flag[CPCB1RespawnYellow]>
+      }
+      else {
+        - ^flag <player> CP.DiedInRegion:!
+        - determine <server.flag[CPCB1RespawnWhite]>
+      }
+      - health <player> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+      - heal <player>
+      - flag <player> MaxHealthDamageCount:0
+    }
+
+    on player damaged in CPCB1DeathRegion:
+    - ^if <context.final_damage> >= <context.entity.health> {
+      - ^playsound <context.entity.location> sound:HURT_FLESH pitch:<util.random.decimal[0.9].to[1.3]>
+      - ^define CurrentHealth <context.entity.health.as_int||0>
+      - ^define CurrentMaxHealth <context.entity.health.max.as_int||20>
+     # - ^playsound <context.entity.location> sound:bat_takeoff pitch:<util.random.decimal[0.9].to[1.3]>
+      - ^if <context.entity.flag[RaceColour]||White> == Blue {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,11 quantity:200
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@blue_wool
+        - ^teleport <context.entity> <server.flag[CPCB1RespawnBlue]>
+      }
+      else if <context.entity.flag[RaceColour]||White> == Red {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,14 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@red_wool
+        - ^teleport <context.entity> <server.flag[CPCB1RespawnRed]>
+      }
+      else if <context.entity.flag[RaceColour]||White> == Yellow {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,4 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@yellow_wool
+        - teleport <context.entity> <server.flag[CPCB1RespawnYellow]>
+      }
+      else {
+        - ^playeffect <context.entity.location> effect:iconcrack_35,0 quantity:100
+        - modifyblock <context.entity.location.find.blocks.within[3].filter[material.name.is[!=].to[air]].first||<context.entity.location>> m@wool
+        - ^teleport <context.entity> <server.flag[CPCB1RespawnWhite]>
+      }
+      - ^adjust <context.entity> fire_time:0t
+      - ^execute as_server "effect <context.entity.name> clear"
+      - ^health <context.entity> <math.as_int:<context.entity.health.max>+<context.entity.flag[MaxHealthDamageCount]||0>*2>
+      - ^heal <context.entity>
+      - ^feed <context.entity>
+      - ^flag <context.entity> MaxHealthDamageCount:0
+      - run DeathAnnouncement def:<context.entity.name||Player>|<context.entity.flag[RaceColour].to_lowercase||gray>|<context.entity.item_in_hand.display||<context.entity.item_in_hand.formatted.to_titlecase.replace[air].with[Nothing!]||Empty>>|<context.damager.name||Killer>|<context.damager.flag[RaceColour].to_lowercase||gray>|<context.damager.item_in_hand.display||<context.damager.item_in_hand.formatted.to_titlecase.replace[air].with[Nothing!]||Empty>>|<context.damager.health.as_int||20>|<context.damager.health.max.as_int||20>|<context.cause||null>|<context.damager.type||null>|<context.damager.item_in_hand.simple||i@air>|<context.damage.as_int||0>|%CurrentHealth%|%CurrentMaxHealth%|<math.as_int:%CurrentHealth%-<context.damage.as_int||0>> delay:1t
+      - determine CANCELLED
+    }
+    else if <context.final_damage> >= 4 && <context.entity.health.max> > 4 {
+      - ^playsound <context.entity.location> sound:zombie_infect pitch:<util.random.decimal[0.9].to[1.1]>
+      - wait 1t
+      - ^health <context.entity> <math.as_int:<context.entity.health.max>-2>
+      - ^flag <context.entity> MaxHealthDamageCount:++
+      - ^announce "<gray>Tea: Lowering health! <context.entity.name>:<context.entity.health.max.as_int||0>" to_flagged:DreamListener
+    }
+
+"DeathAnnouncementOld":
+  type: task
+  debug: false
+  script:
+  - if <li@entity_attack|entity_explosion|projectile.contains[<def[9]>]||false> == true {
+    - if <def[10]> == player {
+      - foreach <server.list_online_players> {
+        - if <%value%.world> != w@Dream {
+          - foreach next
+        }
+        else {
+          - announce "<gray>Tellraw to <%value%.name>" to_flagged:DreamListener
+          - execute as_server "tellraw <%value%.name> [<&dq><&dq>,<&lc><&dq>text<&dq>:<&dq>-> <&dq>,<&dq>color<&dq>:<&dq><def[2]><&dq><&rc>,<&lc><&dq>text<&dq>:<&dq><def[4]><&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq>,<&dq>hoverEvent<&dq>:<&lc><&dq>action<&dq>:<&dq>show_text<&dq>,<&dq>value<&dq>:<&lc><&dq>text<&dq>:<&dq><&dq>,<&dq>extra<&dq>:[<&lc><&dq>text<&dq>:<&dq><def[7]>/<def[8]>\n<&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>,<&lc><&dq>text<&dq>:<&dq><def[6]><&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>]<&rc><&rc><&rc>,<&lc><&dq>text<&dq>:<&dq> has killed<&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>,<&lc><&dq>text<&dq>:<&dq> <def[1]><&dq>,<&dq>color<&dq>:<&dq><def[2]><&dq>,<&dq>hoverEvent<&dq>:<&lc><&dq>action<&dq>:<&dq>show_text<&dq>,<&dq>value<&dq>:<&lc><&dq>text<&dq>:<&dq><&dq>,<&dq>extra<&dq>:[<&lc><&dq>text<&dq>:<&dq><def[3]><&dq>,<&dq>color<&dq>:<&dq><def[2]><&dq><&rc>]<&rc><&rc><&rc>]"
+        }
+      }
+    }
+  }
+
+"DeathAnnouncementDead":
+  type: task
+  debug: false
+  script:
+  - if <li@entity_attack|entity_explosion|projectile.contains[<def[9]>]||false> == true {
+    - if <def[10]> == player {
+      - foreach <server.list_online_players> {
+        - if <%value%.world> != w@Dream {
+          - foreach next
+        }
+        else {
+          - announce "<gray>Tellraw to <%value%.name>" to_flagged:DreamListener
+          - execute as_server "tellraw t<&dq>:<&dq><def[7]>/<def[8]>\n<&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>,<&lc><&dq>text<&dq>:<&dq><def[6]><&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>]<&rc><&rc><&rc>,<&lc><&dq>text<&dq>:<&dq> has killed<&dq>,<&dq>color<&dq>:<&dq><def[5]><&dq><&rc>,<&lc><&dq>text<&dq>:<&dq> <def[1]><&dq>,<&dq>color<&dq>:<&dq><def[2]><&dq>,<&dq>hoverEvent<&dq>:<&lc><&dq>action<&dq>:<&dq>show_text<&dq>,<&dq>value<&dq>:<&lc><&dq>text<&dq>:<&dq><&dq>,<&dq>extra<&dq>:[<&lc><&dq>text<&dq>:<&dq><def[3]><&dq>,<&dq>color<&dq>:<&dq><def[2]><&dq><&rc>]<&rc><&rc><&rc>]"
+        }
+      }
+    }
+  }
+
+"DeathAnnouncement":
+  type: task
+  debug: false
+  script:
+  - announce "<gray>Tea: Running DeathAnnouncement <def[9]>|<def[10]>" to_flagged:DreamListener
+  - ^if <li@entity_attack|entity_explosion|projectile.contains[<def[9]>]||false> == true {
+    - ^if <def[10]> == player {
+      - ^define killer "text:'<%5%>%4%',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'<def[7]>/<def[8]>\n','color':'<def[5]>'},{'text':'<def[6]> (%12% dmg)','color':'<def[5]>'}]}}"
+      - ^define victim "text:'<%2%>%1%',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'<def[15]>/<def[14]>\n','color':'<def[2]>'},{'text':'<def[3]>','color':'<def[2]>'}]}}"
+    #  - ^define victim "text:'<%2%>%1%',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'%15%/%14%\n','color':'%2%'},'text':'<def[3]>','color':'%2%'}]}}"
+     # - define mcmonkey "text:'<&7>mcmonkey',clickEvent:{action:open_url,value:'http://mcmonkey.org'},hoverEvent:{action:show_item,value:'{<i@dwe_Author_mcmonkey.json>}'}"
+      - ^if %11% == i@bow {
+        - ^define spacer "text:'<%5%> shot '"
+      }
+      else {
+        - ^define spacer "text:'<%5%> killed '"
+      }
+      - ^define prefix "text:'<%2%>-> '"
+     # - define tellrawscript ['',{'text':'-> ','color':'<def[2]>'},{'text':'<def[4]>','color':'<def[5]>','hoverEvent':{'action':'show_text','value':{'text':'','extra':[{'text':'<def[7]>/<def[8]>\n','color':'<def[5]>'},{'text':'<def[6]>','color':'<def[5]>'}]}}},{'text':' has killed','color':'<def[5]>'},{'text':' <def[1]>','color':'<def[2]>','hoverEvent':{'action':'show_text','value':{'text':'','extra':[{'text':'<def[3]>','color':'<def[2]>'},{'text':'PLAYERHEATH','color':'blue'}]}}}]
+      - ^foreach <server.list_online_players> {
+        - ^if <%value%.world> != w@Dream {
+          - ^foreach next
+        }
+        else {
+          - ^announce "<gray>Tellraw to <%value%.name> %13%-%12%/%14%" to_flagged:DreamListener
+        #  - execute as_server "/tellraw <%value%.name> %tellrawscript%"
+          - ^execute as_server "tellraw <%value%.name> {text:'',extra:[{%prefix%},{%killer%},{%spacer%},{%victim%}]}"
+
+        }
+      }
+    }
+  }
+  else if <def[9]> == fall {
+      - ^if %12% == 5 {
+        - ^define killer "text:'<gray>Gravity',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'A rough landing','color':'gray'}]}}"
+      }
+      else if %12% < 3 {
+        - ^define killer "text:'<gray>Gravity',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'A small drop','color':'gray'}]}}"
+      }
+      else if %12% < 10 {
+        - ^define killer "text:'<gray>Gravity',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'A sudden stop','color':'gray'}]}}"
+      }
+      else if %12% < 19 {
+        - ^define killer "text:'<gray>Gravity',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'A BIG fall','color':'gray'}]}}"
+      }
+      else {
+        - ^define killer "text:'<gray>Gravity',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'Did it hurt? When you fell from Heaven?','color':'gray'}]}}"
+      }
+      - ^define victim "text:'<%2%>%1%',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'<def[15]>/<def[14]>\n','color':'<def[2]>'},{'text':'<def[3]>','color':'<def[2]>'}]}}"
+      - ^define spacer "text:'<gray> killed '"
+      - ^define prefix "text:'<%2%>-> '"
+      - ^foreach <server.list_online_players> {
+        - ^if <%value%.world> != w@Dream {
+          - ^foreach next
+        }
+        else {
+          - ^announce "<gray>Tellraw to <%value%.name> <def[12]>" to_flagged:DreamListener
+          - ^execute as_server "tellraw <%value%.name> {text:'',extra:[{%prefix%},{%killer%},{%spacer%},{%victim%}]}"
+
+        }
+      }
+  }
+  else {
+      - ^define killer "text:'<gray>Death',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'*/*\n','color':'gray'},{'text':'The Hand of Death','color':'gray'}]}}"
+      - ^define victim "text:'<%2%>%1%',hoverEvent:{action:show_text,value:{'text':'','extra':[{'text':'<def[15]>/<def[14]>\n','color':'<def[2]>'},{'text':'<def[3]>','color':'<def[2]>'}]}}"
+      - ^define spacer "text:'<%5%> touched '"
+      - ^define prefix "text:'<%2%>-> '"
+      - ^foreach <server.list_online_players> {
+        - ^if <%value%.world> != w@Dream {
+          - ^foreach next
+        }
+        else {
+          - ^announce "<gray>Tellraw to <%value%.name>" to_flagged:DreamListener
+          - ^execute as_server "tellraw <%value%.name> {text:'',extra:[{%prefix%},{%killer%},{%spacer%},{%victim%}]}"
+
+        }
+      }
+  }
+
+"FireworkTaskYellow":
+  type: task
+  debug: true
+  script:
+  - ^spawn e@firework[firework_item=i@firework[firework=true,false,BALL,255,255,0,255,150,0]] <def[1]> save:fworkyellow
+  - ^adjust <entry[fworkyellow].spawned_entities.get[1]> detonate
+  
+"FireworkTaskBlue:
+  type: task
+  debug: true
+  script:
+  - ^spawn e@firework[firework_item=i@firework[firework=true,false,BALL,0,200,255,0,100,255]] <def[1]> save:fworkblue
+  - ^adjust <entry[fworkblue].spawned_entities.get[1]> detonate
+
+"FireworkTaskRed:
+  type: task
+  debug: true
+  script:
+  - ^spawn e@firework[firework_item=i@firework[firework=true,false,BALL,255,0,0,200,0,0]] <def[1]> save:fworkred
+  - ^adjust <entry[fworkred].spawned_entities.get[1]> detonate
+
+"FireworkTaskWhite:
+  type: task
+  debug: true
+  script:
+  - ^spawn e@firework[firework_item=i@firework[firework=true,false,BALL,255,255,255,100,100,100]] <def[1]> save:fworkwhite
+  - ^adjust <entry[fworkwhite].spawned_entities.get[1]> detonate
+
+"FireworkTaskGray:
+  type: task
+  debug: true
+  script:
+  - ^spawn e@firework[firework_item=i@firework[firework=true,false,BALL,255,255,255,100,100,100]] <def[1]> save:fworkwhite
+  - ^adjust <entry[fworkwhite].spawned_entities.get[1]> detonate
+
+"TeleportTask":
+  type: task
+  debug: true
+  script:
+  - ^if <server.flag[<def[2]>TeleportDestination].as_location||null> == null {
+    - ^announce "<gray><bold>TeleportTask<gray>: <yellow>No Teleport Destination! <gray><def[2]>.Teleport.Destination" to_flagged:NoonLightDiagnostic
+  }
+  else {
+    - ^announce "<gray><bold>TeleportTask<gray>: Teleporting <def[1].list_players.parse[name].replace[li@].with[].replace[|].with[,<&sp>]>: <def[2]>.Teleport.Destination" to_flagged:NoonLightDiagnostic
+    - teleport <def[1].list_players.replace[li@].with[]> <server.flag[<def[2]>TeleportDestination]>
+  }
