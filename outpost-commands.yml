@@ -1,3 +1,49 @@
+   # OUTPOST-COMMANDS
+   # There are 2 commands here in this file: /outpost and /toutpost
+   #
+   # /outpost is for all players and includes all basic Outpost functions
+   # info, report, here, list, player, and all accompanying commands
+   #
+   # /toutpost is for admins and includes additional functions
+   # list, listteams, start, and all accompanying commands
+   # Only players flagged TeaOutpostBypass:true have access to /toutpost.
+
+
+   # ----- ----- ----- ----- ----- 
+   # COMMANDS: /outpost
+   ## HERE
+   # influence
+   # boost
+   ## REPORT
+   # team
+   # teamally
+   # teamenemy
+   # setteamally
+   # removeteamally
+   # setteamenemy
+   # removeteamenemy
+   ## PLAYER
+   # upgrades
+   # teamcolour
+   # setteamcolour
+   # playercolour
+   # setplayercolour
+   # manage
+   # rename
+   # setmessage
+   # showmcmmo
+   # setmcmmo
+   # showspells
+   # buyspell
+   # spells
+   # setspell
+   # showtargets
+   # settargets
+   ## LIST
+   ## INFO
+   # lookup
+   # default
+   # ----- ----- ----- ----- ----- 
 
 TeaOutpost_PlayerCommand:
     type: command
@@ -1499,6 +1545,38 @@ TeaOutpost_PlayerCommand:
       }
 
 
+   # ----- ----- ----- ----- ----- 
+   # COMMANDS: /toutpost
+   # cancel
+   ## START
+   # manage
+   # towny
+   # townylinkon
+   # townylinkoff
+   # setnation
+   # settown
+   # setnpc
+   # listteams
+   # manageteam
+   # teamsetname
+   # teamsetnametag
+   # teamsetnation
+   # rename
+   # setmessage
+   # showmcmmo
+   # setmcmmo
+   # showspells
+   # buyspells
+   # spells
+   # setspell
+   # showtargets
+   # settargets
+   # agree
+   # LIST
+   # lookup
+   # default
+   # ----- ----- ----- ----- ----- 
+
 TeaOutpost_Command:
     type: command
     debug: false
@@ -2105,5 +2183,3 @@ TeaOutpost_Command:
          # - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>outpost player|outpost player|<dark_aqua>Click!]><gray> - View or edit player information" targets:<player>
           - ^narrate "<proc[msgHover].context[<dark_aqua> <&gt> |<dark_aqua>This line has clickable text!]><proc[msgCommand].context[<dark_aqua>/toutpost start|toutpost start|<dark_aqua>Click!]><gray> - Create a capturable outpost" targets:<player>
           #- ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Click to <proc[msgCommand].context[<aqua>START|toutpost start|<aqua>/Click this to start creating a new Outpost]> <dark_aqua>location finder." targets:<player>
-
-
