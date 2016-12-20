@@ -179,6 +179,7 @@ TeaOutpost_PlayerCommand:
             else {
               - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
               }
+
    ## INFLUENCE MENU ---
         - case influence:
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
@@ -229,10 +230,12 @@ TeaOutpost_PlayerCommand:
                 - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
                 - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
                 - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
+                - define TownOwnerStuff <server.flag[TownOwnerof%ManageName%].to_titlecase||Gray>
+
                 - define LastDIBoostDate <player.flag[LastDIBoostDate]||00>
                 - define CurrentDate <util.date.time.year><util.date.time.month.replace[regex:^(?!..)].with[0]><util.date.time.day.replace[regex:^(?!..)].with[0]>
                 - define CurrentTime <util.date.time.hour><util.date.time.minute.replace[regex:^(?!..)].with[0]>
-                - ^narrate "<gold><&lb>OUTPOST<&rb> INFLUENCE BOARD<&co> <gray><def[ManageName].to_uppercase>" targets:<player>
+                - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE BOARD<&co> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>" targets:<player>
        # IF %MANAGENAME%INFLUENCELIST IS EMPTY, NARRATE "NONE"
                 - if <server.flag[%ManageName%InfluenceList].is_empty||true> {
                   - ^narrate "<gray>None" targets:<player>
@@ -241,7 +244,7 @@ TeaOutpost_PlayerCommand:
                   else {
            # IF (THE PLAYER HAS ALREADY USED HIS DAILY INFLUENCE BOOST) {
                     - if <def[LastDIBoostDate]> == <def[CurrentDate]> {
-                      - narrate "Next Boost in <el@24.sub[<util.date.time.hour>]> hours." targets:<player>
+                      - narrate "<proc[msgHover].context[<gray> + <italic>Next Influence Boost in <el@24.sub[<util.date.time.hour>]> hours.| <gray>Influence Boosts are available daily ]>" targets:<player>
              # FOREACH (LIST OF ALL OUTPOSTS IN TOWN, OR JUST THE OUTPOST NAME) {
                       - define NoonLightList <server.flag[%ManageName%OutpostList].as_list||li@%ManageName%>
                       - if <def[NoonLightList].size> == 1 {
@@ -559,7 +562,7 @@ TeaOutpost_PlayerCommand:
                       }
              # ELSE (THE PLAYER HAS NOT YET USED HIS DAILY INFLUENCE BOOST) {
                       else {
-                        - narrate "Boost available!" targets:<player>
+                        - narrate "<proc[msgHover].context[<aqua> + <italic>Influence Boost available!| <aqua>Influence Boosts are available daily ]>" targets:<player>
                         - if !<server.flag[%ManageName%InfluenceList].contains[<player.flag[RaceColour]>]||false> {
                           - define PlayerTeam <player.flag[RaceColour]||Gray>
                           - narrate "<%PlayerTeam%><&lb><server.flag[%ManageName%InfluencePoints%PlayerTeam%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||000><&rb> <proc[msgCommand].context[<&lt>-|outpost boost subtract %ManageName% %PlayerTeam%|outpost boost subtract %ManageName% %PlayerTeam%]><%PlayerTeam%> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%PlayerTeam%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) <proc[msgCommand].context[+<&gt>|outpost boost add %ManageName% %PlayerTeam%|outpost boost add %ManageName% %PlayerTeam%]><%PlayerTeam%> <&lb><server.flag[%PlayerTeam%DisplayNameTag]||<server.flag[%PlayerTeam%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
@@ -571,7 +574,7 @@ TeaOutpost_PlayerCommand:
 
 
                     }
-                - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost here|<gold>Back to Outpost Here]>" targets:<player>
+                - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost here|<gold> <&lt><&lt> Back to Outpost Here ]>" targets:<player>
 
                 }
             }
