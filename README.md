@@ -2,13 +2,11 @@
 
 Capturable outposts (Area Control game)
 
-This project is currently in development. Please do not use this
-on any live server yet. I do not want to be responsible for any grief
-or drama that results from using the current, unstable build.
-
-Please wait for a stable build. Cheers!
-
 Public Development Trello (https://trello.com/b/GR1p8CAR/)
+
+This project is currently in development. Please wait for a stable build.
+
+Cheers!
 
 Requirements:
 - Denizen Scripting Plugin (http://one.denizenscript.com/ircchat_denizen)
