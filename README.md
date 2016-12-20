@@ -1,6 +1,6 @@
 # Outpost by Tea
 
-Capturable outposts
+Capturable outposts (Area Control game)
 
 Public Development Trello (https://trello.com/b/GR1p8CAR/)
 
@@ -9,3 +9,8 @@ Requirements:
 - Message Constructor Library by Anthony (http://one.denizenscript.com/denizen/repo/entry/90)
 - Towny Plugin
 - VirtualPlayers plugin (https://dev.bukkit.org/projects/virtualplayers2)
+
+Installation:
+- Put all .yml files into the .../plugins/Denizen/scripts folder
+- Reload denizen scripts
+- Enjoy!
