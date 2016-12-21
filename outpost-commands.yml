@@ -203,7 +203,7 @@ TeaOutpost_PlayerCommand:
            # // and the player is NOT in a town, then give the player the "sorry" message, and
            # // we're done here.
             else {
-              - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
+              - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold> This will show you a list of all Outposts. ]>" targets:<player>
               }
 
 
@@ -211,10 +211,21 @@ TeaOutpost_PlayerCommand:
 
 
      ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
-     ## INFLUENCE MENU ---
+     ## INFLUENCE MENU - (Check information about the Influence Board at the Outpost at <player>'s location)
      ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
         - case influence:
+
+           # // Start off by checking if:
+           # // a) TeaOutpostList contains any of the cuboids surrounding <player>
+           # // OR
+           # // b) <player> is inside a town
+           # // If both of these are false, jump to the end cause we're done here.
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
+
+           # // If a OR b are true,
+           # // Let's check all the cuboids against that TeaOutpostList first.
+           # // We're looking for the Outpost (because Outposts are cuboids, but not all cuboids are
+           # // Outposts).
             - foreach <player.location.cuboids||li@> {
               - if <server.flag[TeaOutpostList].as_list.contains_any[%value%]||false> == true {
                 - define CuboidName <def[value].replace[cu@].with[]>
@@ -227,10 +238,19 @@ TeaOutpost_PlayerCommand:
             - if %CuboidName% == null {
               - define CuboidName Next
               }
-            - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
+
+
+           # // At this point, %CuboidName% is defined as either the Outpost we're looking for, or
+           # // is defined as 'Next'.
+
+           # // Okay, here's where we see if we need to check into the players town.
+           # // If the above code didn't find anything, then %CuboidName% will sill be 'Next',
+           # // and we should look deeper.
+
+           # (( Note to Tea: Is "<player.location.town||null> != null" redundant? It should be a
+           # (( given at this point (because it's on the first line of CASE HERE).
             - if %CuboidName% == Next && <player.location.town||null> != null {
               - define TownsName <player.location.town.replace[town@].with[]||null>
-            #  - define ShortestDistance 99999
               - foreach <server.flag[%TownsName%OutpostList]||li@> {
                 - define ValueCenter <cu@%value%.center>
                 - define DistanceToValue <player.location.distance[<def[ValueCenter]>]>
@@ -241,24 +261,28 @@ TeaOutpost_PlayerCommand:
                 }
               - define CuboidName <def[NearestOutpost]||Next>
               }
-            - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
-   # IF NO OUTPOST HAS BEEN FOUND { SORRY NO OUTPOST HERE! }
+
+
+           # // If %CuboidName% is still defined as 'Next' by this point in the code, no Outpost
+           # // has been found. Give the player the "Sorry" message, and we're done here.
             - if %CuboidName% == Next {
               - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<aqua>View Outpost List?|outpost list|<aqua>This will show you a list of all Outposts.]>" targets:<player>
               }
-     # ELSE (IF AN OUTPOST HAS BEEN FOUND) {
+
+
+           # // Assuming an Outpost has been found, run this stuff.
               else {
-       # IF THERE IS A TOWN ASSOCIATED WITH THAT OUTPOST { DEFINE MANAGENAME AS THE TOWN NAME }
+
+           # // Quick check to see whether the Outpost we've found is a part of a town.
+           # // Define %ManageName% as either that town, or just the Outpost itself.
                 - if <server.flag[%Cuboidname%TownName]||null> != null {
                   - define ManageName <server.flag[%CuboidName%TownName]>
-                  - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                   }
-         # ELSE DEFINE MANAGENAME AS THE OUTPOST NAME
                   else {
                     - define ManageName %CuboidName%
-                    - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                     }
-       # DEFINE A BUNCH OF STUFF WE'LL NEED LATER
+
+           # // Prep a bunch of definitions here. Names, colours, and times.
                 - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
                 - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
                 - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
@@ -267,17 +291,35 @@ TeaOutpost_PlayerCommand:
                 - define LastDIBoostDate <player.flag[LastDIBoostDate]||00>
                 - define CurrentDate <util.date.time.year><util.date.time.month.replace[regex:^(?!..)].with[0]><util.date.time.day.replace[regex:^(?!..)].with[0]>
                 - define CurrentTime <util.date.time.hour><util.date.time.minute.replace[regex:^(?!..)].with[0]>
+
+
+           # // Alright, from here on out, we're putting the menu into chat.
                 - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE<&co> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>" targets:<player>
-       # IF %MANAGENAME%INFLUENCELIST IS EMPTY, NARRATE "NONE"
+           # // If the Influence List is somehow empty, return "None"
                 - if <server.flag[%ManageName%InfluenceList].is_empty||true> {
                   - ^narrate "<gray>None" targets:<player>
                   }
-         # ELSE (%MANAGENAME%INFLUENCELIST IS NOT EMPTY) {
+           # // More realistically, it's time to build the menu!
                   else {
-           # IF (THE PLAYER HAS ALREADY USED HIS DAILY INFLUENCE BOOST) {
+
+           # // The two menu's that can be given to the player at this point are:
+           # // 1) The player has already used his Influence Boost
+           # // 2) The player has not yet used his Influence Boost
+           # (( Note from Tea: In this version, only (1) will calculate the expected Influence
+           # (( changes in the next 24 hours. I'll add that to (2) eventually!
+
+           # // We'll start with the "Already used Influence Boost" menu.
                     - if <def[LastDIBoostDate]> == <def[CurrentDate]> {
                       - narrate "<proc[msgHover].context[<gray> + <italic>Next Influence Boost in <el@24.sub[<util.date.time.hour>]> hours.| <gray>Influence Boosts are available daily ]>" targets:<player>
-             # FOREACH (LIST OF ALL OUTPOSTS IN TOWN, OR JUST THE OUTPOST NAME) {
+
+           # // At this point, we've found a single Outpost (Control Zone), either the one the
+           # // player is standing inside of, or the nearest one in town.
+           
+           # // We're going to need to know about any and all Control Zones that are related to the
+           # // one we found above.
+           # // Here, we define "NoonLightList" as a list of all the relevant Control Zones
+           # (( Note from Tea: "NoonLight" was the name of the original project for Outpost.
+           # (( NoonLights are what we now call Control Zones, the magic box you stand in.
                       - define NoonLightList <server.flag[%ManageName%OutpostList].as_list||li@%ManageName%>
                       - if <def[NoonLightList].size> == 1 {
                         - define ManageNameDisplay <server.flag[%ManageName%DisplayName]||The<&sp>Outpost>
@@ -285,15 +327,14 @@ TeaOutpost_PlayerCommand:
                         else {
                           - define ManageNameDisplay %ManageName%
                           }
-                    #  - define NoonLightOwnersList li@
                       - foreach <def[NoonLightList]> {
-               # ADD %VALUE% TO THE NOONLIGHTOWNERSLIST IN THE FORMAT OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE
+           # // We'll also make a list of all the owners of all the NoonLights in the list.
+               # ADD %VALUE% TO THE NOONLIGHTOWNERSLIST IN THE FORMAT OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE/%VALUE%LASTCAPTURETIME/%VALUE%
                         - if <def[NoonLightOwnersList]||null> == null {
                           - define NoonLightOwnersList li@<server.flag[Ownerof%value%]>/<server.flag[%value%LastCaptureDate]>/<server.flag[%value%LastCaptureTime]>/%value%
                           }
                           else {
                             - define NoonLightOwnersList <def[NoonLightOwnersList]>|<server.flag[Ownerof%value%]>/<server.flag[%value%LastCaptureDate]>/<server.flag[%value%LastCaptureTime]>/%value%
-
                             }
                         }
                ###       - announce <def[NoonLightOwnersList]>
@@ -611,9 +652,18 @@ TeaOutpost_PlayerCommand:
 
                 }
             }
+
+           # // If TeaOutpostList does NOT contain any of the cuboids found at <player>'s location,
+           # // and the player is NOT in a town, then give the player the "sorry" message, and
+           # // we're done here.
             else {
               - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
               }
+
+
+
+
+
    ## BOOST ---
         - case boost:
           - define Confirmation <context.args.get[5]||No>
