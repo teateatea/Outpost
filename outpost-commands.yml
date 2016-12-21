@@ -59,19 +59,22 @@ TeaOutpost_PlayerCommand:
     script:
       - choose <context.args.first||default>:
 
-   ## HERE ---(Check information about the Outpost at <player>'s location)
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+     ## HERE - (Check information about the Outpost at <player>'s location)
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
         - case here:
 
-          # // Start off by checking if:
-          # // a) TeaOutpostList contains any of the cuboids surrounding <player>
-          # // OR
-          # // b) <player> is inside a town
+           # // Start off by checking if:
+           # // a) TeaOutpostList contains any of the cuboids surrounding <player>
+           # // OR
+           # // b) <player> is inside a town
+           # // If both of these are false, jump to the end cause we're done here.
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
 
-          # // If a OR b are true,
-          # // Let's check all the cuboids against that TeaOutpostList first.
-          # // We're looking for the Outpost (because Outposts are cuboids, but not all cuboids are
-          # // Outposts).
+           # // If a OR b are true,
+           # // Let's check all the cuboids against that TeaOutpostList first.
+           # // We're looking for the Outpost (because Outposts are cuboids, but not all cuboids are
+           # // Outposts).
             - foreach <player.location.cuboids||li@> {
               - if <server.flag[TeaOutpostList].as_list.contains_any[%value%]||false> == true {
                 - define CuboidName <def[value].replace[cu@].with[]>
@@ -203,7 +206,13 @@ TeaOutpost_PlayerCommand:
               - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
               }
 
-   ## INFLUENCE MENU ---
+
+
+
+
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+     ## INFLUENCE MENU ---
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
         - case influence:
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
             - foreach <player.location.cuboids||li@> {
