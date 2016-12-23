@@ -495,9 +495,15 @@ TeaOutpost_PlayerCommand:
                             - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]><proc[msgHover].context[<%value%>) -<def[NoonLightOwnersList].size> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>|<def[HoverText]>]>"
                             }
                         }
-#=======================================================================
                       }
-             # ELSE (THE PLAYER HAS NOT YET USED HIS DAILY INFLUENCE BOOST) {
+
+           # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+           # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+
+           # // If the player has not yet used his daily influence boost, then just show him
+           # // a basic menu with his boost options.
+           # (( Note to Tea: One day, come back to this and add all the calculations we do above.
+           # (( Players might want to know the outlook before they pick a boost.
                       else {
                         - narrate "<proc[msgHover].context[<aqua> + <italic>Influence Boost available!| <aqua>Influence Boosts are available daily ]>" targets:<player>
                         - if !<server.flag[%ManageName%InfluenceList].contains[<player.flag[RaceColour]>]||false> {
@@ -508,12 +514,9 @@ TeaOutpost_PlayerCommand:
                           - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> <proc[msgCommand].context[<&lt>-|outpost boost subtract %ManageName% %value%|outpost boost subtract %ManageName% %value%]><%value%> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) <proc[msgCommand].context[+<&gt>|outpost boost add %ManageName% %value%|outpost boost add %ManageName% %value%]><%value%> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
                           }
                         }
-
-
                     }
                 - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost here|<gold> <&lt><&lt> Back to Outpost Here ]>" targets:<player>
                 - ^narrate "" targets:<player>
-
                 }
             }
 
