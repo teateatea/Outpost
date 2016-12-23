@@ -580,7 +580,8 @@ TeaOutpost_PlayerCommand:
           - ^narrate "<proc[msgUrl].context[<gold> <&gt> Outpost Discussion Thread|www.rcommunitymc.com/forum/page/1/m/37643997/viewthread/28779448-outpost-by-tea-discussion|<gold> <&gt> Click to open <white>Outpost Discussion Thread<gold> link ]>" targets:<player>
         #  - ^narrate "" targets:<player>
           - ^narrate "<proc[msgUrl].context[<yellow> <&gt> Public Development Trello|trello.com/b/GR1p8CAR/public-development|<yellow> <&gt> Click to open <white>Public Development Trello<yellow> link ]>" targets:<player>
-        #  - ^narrate "" targets:<player>
+          - ^narrate "<proc[msgUrl].context[<gold> <&gt> Outpost GitHub|github.com/teateatea/Outpost|<gold> <&gt> Click to open <white>Outpost GitHub<gold> link ]>" targets:<player>
+          - ^narrate "" targets:<player>
           - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost|<gold> <&lt><&lt> Back to Outpost Menu ]>" targets:<player>
           - ^narrate "" targets:<player>
 
