@@ -467,7 +467,12 @@ TeaOutpost_PlayerCommand:
                           - define HoverLine3 <%NLCFTColour%><&sp><&sp>+<def[NoonLightCountforTeam%value%]><&sp><gold><&co><&sp><%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp><gold>has<&sp><red>captured<&sp><%NLCFTColour%><def[NoonLightCountforTeam%value%]><&sp><gold>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
                           - define HoverLineEst1 <green><&sp><&sp>+<def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>]><&sp><gold><&co><&sp><%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp><gold>has<&sp><dark_green>established<&sp><%NLCFTColour%><def[%value%EstablishCount]><&sp><gold>of<&sp>its<&sp><gold>Control<&sp>Zones<&sp>
                           - define HoverLineEst2 <green><&sp><&sp><&sp><&sp><&sp><&sp><gold><&co><&sp>Every<&sp>Established<&sp>Control<&sp>Zone<&sp>is<&sp>granting<&sp><green>+<def[EstablishmentCount%value%]><&sp><gold>IP
-                          - define HoverLine4 <dark_red><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><dark_red><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                          - if <def[NoonLightCountAgainstTeam%value%]> == 0 {
+                            - define HoverLine4 <green><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><green><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                            }
+                            else {
+                              - define HoverLine4 <dark_red><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><dark_red><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                              }
                           - define HoverLine5 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><gold><&sp>is<&sp>estimated<&sp>to<&sp><def[NetInfluenceWord]><&sp><%NetInfluenceColour%><def[NetInfluence].mul[72].abs.round><gold><&sp>IP<&sp>every<&sp>24<&sp>hours.
                           - if <def[%value%EstablishCount]> > 0 {
                             - define HoverText <def[HoverLine1]><&nl><&nl><def[HoverLine2]><&nl><&nl><def[HoverLine3]><&nl><def[HoverLineEst1]><&nl><def[HoverLineEst2]><&nl><&nl><def[HoverLine4]><&nl><&nl><def[HoverLine5]>
