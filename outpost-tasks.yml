@@ -5,7 +5,7 @@ TeaOutpost:
   name: Outpost by Tea
   id: 117
   description: Outpost by Tea
-  version: 16-12-23
+  version: 16-12-24
 
 TeaOutpost_CreationTask:
   type: task
