@@ -47,7 +47,7 @@ TeaOutpost_PlayerCommand:
    # default
    # ----- ----- ----- ----- ----- 
     type: command
-    debug: true
+    debug: false
     name: outpost
     description: Outpost by Tea
     usage: /outpost
@@ -59,11 +59,22 @@ TeaOutpost_PlayerCommand:
     script:
       - choose <context.args.first||default>:
 
-   ## HERE ---(Check information about the Outpost at <player>'s location)
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+     ## HERE - (Check information about the Outpost at <player>'s location)
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
         - case here:
-          # IF (ANY OF THE CUBOIDS AT <player>'S LOCATION MATCH TEAOUTPOSTLIST) OR (PLAYER IS IN A TOWN) {
+
+           # // Start off by checking if:
+           # // a) TeaOutpostList contains any of the cuboids surrounding <player>
+           # // OR
+           # // b) <player> is inside a town
+           # // If both of these are false, jump to the end cause we're done here.
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
-            # FOREACH (CUBOIDS AT PLAYER LOCATION) {
+
+           # // If a OR b are true,
+           # // Let's check all the cuboids against that TeaOutpostList first.
+           # // We're looking for the Outpost (because Outposts are cuboids, but not all cuboids are
+           # // Outposts).
             - foreach <player.location.cuboids||li@> {
               - if <server.flag[TeaOutpostList].as_list.contains_any[%value%]||false> == true {
                 - define CuboidName <def[value].replace[cu@].with[]>
@@ -76,10 +87,19 @@ TeaOutpost_PlayerCommand:
             - if %CuboidName% == null {
               - define CuboidName Next
               }
-          #  - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
+
+
+           # // At this point, %CuboidName% is defined as either the Outpost we're looking for, or
+           # // is defined as 'Next'.
+
+           # // Okay, here's where we see if we need to check into the players town.
+           # // If the above code didn't find anything, then %CuboidName% will sill be 'Next',
+           # // and we should look deeper.
+
+           # (( Note to Tea: Is "<player.location.town||null> != null" redundant? It should be a
+           # (( given at this point (because it's on the first line of CASE HERE).
             - if %CuboidName% == Next && <player.location.town||null> != null {
               - define TownsName <player.location.town.replace[town@].with[]||null>
-            #  - define ShortestDistance 99999
               - foreach <server.flag[%TownsName%OutpostList]||li@> {
                 - define ValueCenter <cu@%value%.center>
                 - define DistanceToValue <player.location.distance[<def[ValueCenter]>]>
@@ -90,99 +110,122 @@ TeaOutpost_PlayerCommand:
                 }
               - define CuboidName <def[NearestOutpost]||Next>
               }
-           # - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
+
+
+           # // If %CuboidName% is still defined as 'Next' by this point in the code, no Outpost
+           # // has been found. Give the player the "Sorry" message, and we're done here.
             - if %CuboidName% == Next {
-              - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<aqua>View Outpost List?|outpost list|<aqua>This will show you a list of all Outposts.]>" targets:<player>
+              - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<aqua>View Outpost List?|outpost list|<aqua> This will show you a list of all Outposts. ]>" targets:<player>
               }
+
+
+           # // Assuming an Outpost has been found, run this stuff.
               else {
+
+           # // Quick check to see whether the Outpost we've found is a part of a town.
+           # // Define %InfluenceName% as either that town, or just the Outpost itself.
                 - if <server.flag[%Cuboidname%TownName]||null> != null {
                   - define InfluenceName <server.flag[%CuboidName%TownName]>
-               #   - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                   }
                   else {
                     - define InfluenceName %CuboidName%
-                 #   - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                     }
+
+           # // Prep a bunch of definitions here. Names, constants, and various colours.
+           # (( Note to Tea: Is it really necessary to rename %CuboidName% as %ManageName% ? Why
+           # (( was that changed?
                 - define ManageName %CuboidName%
                 - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
                 - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
                 - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
                 - define TownOwnerStuff <server.flag[TownOwnerof%InfluenceName%].to_titlecase||Gray>
                 - define TownOwnerStuffSecondary <server.flag[TownOwnerof%InfluenceName%Secondary].to_titlecase||Gray>
+
+           # // Okay, we're just about ready to hand the player the /outpost here menu now,
+           # // but we just need to make sure they get the right one. Three broad categories:
+           # // 1) Players team is the Outpost owner, and the player is a regular player
+           # // 2) Players team is the Outpost owner, and the player has a bypass (King, Assistant)
+           # // 3) Players team is not the Outpost owner
+
+           # // Once that's taken care of, give <player> the appropriate menu, and we're done here.
+
                 - if %OwnerStuff% == <player.flag[RaceColour]||Gray> {
-                # NARRATE THIS MENU IF PLAYERS TEAM IS OUTPOST OWNER
-                 # - define ManageName %CuboidName%
-                 # - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
-                 # - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
-                 # - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
-               #   - ^narrate "" targets:<player>
+                # // NARRATE THIS MENU IF PLAYERS TEAM IS OUTPOST OWNER
                   - ^narrate "<proc[msgHover].context[<gold><bold><&lb>OUTPOST<&rb> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>| <gray>ID<&co> <gray><def[ManageName].to_uppercase> ]>" targets:<player>
                   - if <player.flag[TeaOutpostKingPass]||false> != true && <player.flag[TeaOutpostBypass]||false> != true && <player.flag[Tea%ManageName%Pass]||false> != true {
-                  # NARRATE TO PLAYERS THAT DO NOT HAVE ANY OF THE ABOVE PASSES (KINGPASS, BYPASS, OUTPOSTPASS)
+                  # // NARRATE TO PLAYERS THAT DO NOT HAVE ANY OF THE ABOVE PASSES (KINGPASS, BYPASS, OUTPOSTPASS)
                     - ^narrate "<proc[msgCommand].context[<yellow> <&gt> Current Town Owner<&co> <%TownOwnerStuff%><server.flag[%TownOwnerStuff%DisplayName]||Wild> (<server.flag[%InfluenceName%InfluencePoints%TownOwnerStuff%].round||00> IP)|outpost influence %InfluenceName%|<%TownOwnerStuff%> <&gt> Click to view influence board ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Current Influencer<&co> <white><server.flag[%OwnerStuff%DisplayName]||Wild> / <%OwnerStuff%>%OwnerStuff% <white>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary%| <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild><gray> is the current owner. <&nl> <%OwnerStuff%>%OwnerStuff% <gray>is their Team Colour. <&nl> <%OwnerStuffSecondary%>%OwnerStuffSecondary%<gray> is a Personal Colour. ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + Training Time<&co> <white>%TrainingTime%| <gray>Visit this Outpost at %TrainingTime% for<&co> <&nl> <dark_aqua>+1 Experience Level <&nl> <gray>+1 <server.flag[%ManageName%TrainingFocus]||None> Level (if Minecraft Level 30) <&nl> <dark_aqua>+20 minutes of <server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||Nothing> (if Minecraft Level 60) ]>" targets:<player>
-
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Display Name<&co> <white><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>|<dark_red> Only Nation Kings can change Display Names. ]>" targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + MCMMO Focus<&co> <white><server.flag[%ManageName%TrainingFocus]||None>|<dark_red> Only Nation Kings can change McMMO Focus. ]>" targets:<player>
                     }
                     else {
-                    # NARRATE TO PLAYERS WITH A BYPASS
+                  # // NARRATE TO PLAYERS WITH A BYPASS
                       - ^narrate "<proc[msgCommand].context[<yellow> <&gt> Current Town Owner<&co> <%TownOwnerStuff%><server.flag[%TownOwnerStuff%DisplayName]||Wild> (<server.flag[%InfluenceName%InfluencePoints%TownOwnerStuff%].round||00> IP)|outpost influence %InfluenceName%|<%TownOwnerStuff%> <&gt> Click to view influence board ]> " targets:<player>
                       - ^narrate "<proc[msgHover].context[<dark_aqua> + Current Influencer<&co> <white><server.flag[%OwnerStuff%DisplayName]||Wild> / <%OwnerStuff%>%OwnerStuff% <white>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary%| <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild><gray> is the current owner. <&nl> <%OwnerStuff%>%OwnerStuff% <gray>is their Team Colour. <&nl> <%OwnerStuffSecondary%>%OwnerStuffSecondary%<gray> is a Personal Colour. ]> " targets:<player>
                       - ^narrate "<proc[msgHover].context[<gray> + Training Time<&co> <white>%TrainingTime%| <gray>Visit this Outpost at %TrainingTime% for<&co> <&nl> <dark_aqua>+1 Experience Level <&nl> <gray>+1 <server.flag[%ManageName%TrainingFocus]||None> Level (if Minecraft Level 30) <&nl> <dark_aqua>+20 minutes of <server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||Nothing> (if Minecraft Level 60) ]>" targets:<player>
                       - ^narrate "<proc[msgHint].context[<gold> <&gt> Display Name<&co> <white><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>|outpost rename %ManageName%<&sp>|<gold> <&gt> Click then type a new Name at the end of the command <&nl> <gold><&gt> Only Nation Kings can change this. ]>" targets:<player>
                       - ^narrate "<proc[msgCommand].context[<yellow> <&gt> MCMMO Focus<&co> <white><server.flag[%ManageName%TrainingFocus]||None>|outpost showmcmmo %ManageName%|<yellow> <&gt> Click to pick an MCMMO Focus <&nl> <yellow><&gt> Only Nation Kings can change this. ]>" targets:<player>
                       }
-                      #  - ^narrate "" targets:<player>
                   - ^narrate "<proc[msgHint].context[<gold> <&gt> Training Message<&co>|outpost setmessage %ManageName%<&sp>|<gold> <&gt> Click then type a new Message at the end of the command ]>" targets:<player>
                   - ^narrate "<proc[msgHint].context[<gold> <&gt> <white><italic><server.flag[%ManageName%TrainingMessage]||None>|outpost setmessage %ManageName%<&sp>|<gold> <&gt> Click then type a new Message at the end of the command ]>" targets:<player>
-                #  - ^narrate "" targets:<player>
                   - ^narrate "<proc[msgCommand].context[<yellow> <&gt> Spell Effect<&co> <white><server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||None>|outpost spells %ManageName%|<yellow> <&gt> Click to pick a Spell Effect ]>" targets:<player>
-                #  - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|outpost showtargets %ManageName%|<dark_aqua>Click to pick a Spell Target!]>" targets:<player>
+           # (( Note to tea: Uncomment the line below once you've reconfirmed how spell targets work.
+                 # - ^narrate "<proc[msgCommand].context[<gold> <&gt> Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|outpost showtargets %ManageName%|<dark_aqua>Click to pick a Spell Target!]>" targets:<player>
                   - ^narrate "<proc[msgCommand].context[<gold> <&gt> Access Upgrades|outpost upgrades %ManageName%|<gold> <&gt> Buy and manage upgrades ]>" targets:<player>
-                    - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost|<gold> <&lt><&lt> Back to Outpost Menu ]>" targets:<player>
+                  - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost|<gold> <&lt><&lt> Back to Outpost Menu ]>" targets:<player>
                   - ^narrate "" targets:<player>
-
                   }
+
                   else {
-                  # NARRATE THIS MENU IF PLAYERS TEAM IS NOT OUTPOST OWNER
-                   # - define ManageName %CuboidName%
-                   # - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
-                   # - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
-                   # - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
-                 #   - ^narrate "" targets:<player>
+                  # // NARRATE THIS MENU IF PLAYERS TEAM IS NOT OUTPOST OWNER
                     - ^narrate "<proc[msgHover].context[<gold><bold><&lb>OUTPOST<&rb> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>| <gray>ID<&co> <gray><def[ManageName].to_uppercase> ]>" targets:<player>
-                 #   - ^narrate "<proc[msgHover].context[<gray>ID<&co> <gray><def[ManageName].to_uppercase>|<gray>This is a permanent name.]>" targets:<player>
                     - ^narrate "<proc[msgCommand].context[<yellow> <&gt> Current Town Owner<&co> <%TownOwnerStuff%><server.flag[%TownOwnerStuff%DisplayName]||Wild> (<server.flag[%InfluenceName%InfluencePoints%TownOwnerStuff%].round||00> IP)|outpost influence %InfluenceName%|<%TownOwnerStuff%> <&gt> Click to view influence board ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Current Influencer<&co> <white><server.flag[%OwnerStuff%DisplayName]||Wild> / <%OwnerStuff%>%OwnerStuff% <white>/ <%OwnerStuffSecondary%>%OwnerStuffSecondary%| <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild><gray> is the current owner. <&nl> <%OwnerStuff%>%OwnerStuff% <gray>is their Team Colour. <&nl> <%OwnerStuffSecondary%>%OwnerStuffSecondary%<gray> is a Personal Colour. ]> " targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + Training Time<&co> <white>%TrainingTime%| <dark_red>Capture this Outpost to make changes. <&nl> <gray>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <gray>can make changes to this Outpost. ]>" targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Display Name<&co> <white><server.flag[%ManageName%DisplayName]||The<&sp>Outpost>|<dark_red> Capture this Outpost to make changes. <&nl> <dark_aqua>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <dark_aqua>can make changes to this Outpost. ]>" targets:<player>
-                  #  - ^narrate "" targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + MCMMO Focus<&co> <white><server.flag[%ManageName%TrainingFocus]||None>| <dark_red>Capture this Outpost to make changes. <&nl> <gray>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <gray>can make changes to this Outpost. ]>" targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + Training Message<&co>| <dark_red>Capture this Outpost to make changes. <&nl> <dark_aqua>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <dark_aqua>can make changes to this Outpost. ]>" targets:<player>
                     - ^narrate "<proc[msgHover].context[<dark_aqua> + <white><italic><server.flag[%ManageName%TrainingMessage]||None>| <dark_red>Capture this Outpost to make changes. <&nl> <dark_aqua>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <dark_aqua>can make changes to this Outpost. ]>" targets:<player>
-               #     - ^narrate "" targets:<player>
                     - ^narrate "<proc[msgHover].context[<gray> + Spell Effect<&co> <white><server.flag[%ManageName%SpellEffect].first.replace[_].with[<&sp>]||None>| <dark_red>Capture this Outpost to make changes. <&nl> <gray>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <gray>can make changes to this Outpost. ]>" targets:<player>
-                 #   - ^narrate "<proc[msgHover].context[<gray> - Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|<dark_red>Capture this Outpost to make changes.<&nl><dark_aqua>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <dark_aqua>can make changes to this Outpost.]>" targets:<player>
+           # (( Note to tea: Uncomment the line below once you've reconfirmed how spell targets work.
+                    # - ^narrate "<proc[msgHover].context[<gray> - Spell Targets<&co> <white><server.flag[%ManageName%SpellTargets]||None>|<dark_red>Capture this Outpost to make changes.<&nl><dark_aqua>Only <%OwnerStuff%><server.flag[%OwnerStuff%DisplayName]||Wild> <dark_aqua>can make changes to this Outpost.]>" targets:<player>
                     - ^narrate "<proc[msgCommand].context[<gold> <&gt> Access Upgrades|outpost upgrades %ManageName%|<gold> <&gt> Buy and manage upgrades ]>" targets:<player>
                     - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost|<gold> <&lt><&lt> Back to Outpost Menu ]>" targets:<player>
                     - ^narrate "" targets:<player>
-
                     }
-
-              #  - ^narrate "<gray> - <gold>Facing<&co> <gray><server.flag[%ManageName%Facing]||None>" targets:<player>
-             #   - ^narrate "<proc[msgCommand].context[<dark_aqua><&lt><&lt> RETURN TO OUTPOST LIST|toutpost list|<dark_aqua>Return to Outpost List]>" targets:<player>
                 }
             }
-            # ELSE (NONE OF THE CUBOIDS FOR THE PLAYERS LOCATION MATCH TEAOUTPOSTLIST, AND THE PLAYER IS NOT IN A TOWN) { NARRATE "SORRY NO OUTPOST HERE" }
+
+
+           # // If TeaOutpostList does NOT contain any of the cuboids found at <player>'s location,
+           # // and the player is NOT in a town, then give the player the "sorry" message, and
+           # // we're done here.
             else {
-              - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
+              - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold> This will show you a list of all Outposts. ]>" targets:<player>
               }
 
-   ## INFLUENCE MENU ---
+
+
+
+
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+     ## INFLUENCE MENU - (Check information about the Influence Board at the Outpost at <player>'s location)
+     ## ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
         - case influence:
+
+           # // Start off by checking if:
+           # // a) TeaOutpostList contains any of the cuboids surrounding <player>
+           # // OR
+           # // b) <player> is inside a town
+           # // If both of these are false, jump to the end cause we're done here.
           - if <server.flag[TeaOutpostList].as_list.contains_any[<player.location.cuboids>]||false> == true || <player.location.town||null> != null {
+
+           # // If a OR b are true,
+           # // Let's check all the cuboids against that TeaOutpostList first.
+           # // We're looking for the Outpost (because Outposts are cuboids, but not all cuboids are
+           # // Outposts).
             - foreach <player.location.cuboids||li@> {
               - if <server.flag[TeaOutpostList].as_list.contains_any[%value%]||false> == true {
                 - define CuboidName <def[value].replace[cu@].with[]>
@@ -195,10 +238,19 @@ TeaOutpost_PlayerCommand:
             - if %CuboidName% == null {
               - define CuboidName Next
               }
-            - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
+
+
+           # // At this point, %CuboidName% is defined as either the Outpost we're looking for, or
+           # // is defined as 'Next'.
+
+           # // Okay, here's where we see if we need to check into the players town.
+           # // If the above code didn't find anything, then %CuboidName% will sill be 'Next',
+           # // and we should look deeper.
+
+           # (( Note to Tea: Is "<player.location.town||null> != null" redundant? It should be a
+           # (( given at this point (because it's on the first line of CASE HERE).
             - if %CuboidName% == Next && <player.location.town||null> != null {
               - define TownsName <player.location.town.replace[town@].with[]||null>
-            #  - define ShortestDistance 99999
               - foreach <server.flag[%TownsName%OutpostList]||li@> {
                 - define ValueCenter <cu@%value%.center>
                 - define DistanceToValue <player.location.distance[<def[ValueCenter]>]>
@@ -209,24 +261,28 @@ TeaOutpost_PlayerCommand:
                 }
               - define CuboidName <def[NearestOutpost]||Next>
               }
-            - announce "<player.name> found CuboidName %CuboidName%" to_flagged:DreamListener
-   # IF NO OUTPOST HAS BEEN FOUND { SORRY NO OUTPOST HERE! }
+
+
+           # // If %CuboidName% is still defined as 'Next' by this point in the code, no Outpost
+           # // has been found. Give the player the "Sorry" message, and we're done here.
             - if %CuboidName% == Next {
               - ^narrate "<dark_aqua><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<aqua>View Outpost List?|outpost list|<aqua>This will show you a list of all Outposts.]>" targets:<player>
               }
-     # ELSE (IF AN OUTPOST HAS BEEN FOUND) {
+
+
+           # // Assuming an Outpost has been found, run this stuff.
               else {
-       # IF THERE IS A TOWN ASSOCIATED WITH THAT OUTPOST { DEFINE MANAGENAME AS THE TOWN NAME }
+
+           # // Quick check to see whether the Outpost we've found is a part of a town.
+           # // Define %ManageName% as either that town, or just the Outpost itself.
                 - if <server.flag[%Cuboidname%TownName]||null> != null {
                   - define ManageName <server.flag[%CuboidName%TownName]>
-                  - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                   }
-         # ELSE DEFINE MANAGENAME AS THE OUTPOST NAME
                   else {
                     - define ManageName %CuboidName%
-                    - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
                     }
-       # DEFINE A BUNCH OF STUFF WE'LL NEED LATER
+
+           # // Prep a bunch of definitions here. Names, colours, and times.
                 - define TrainingTime <server.flag[%ManageName%Facing].replace[north].with[Noon].replace[south].with[Midnight].replace[East].with[Dawn].replace[West].with[Dusk].first||None>
                 - define OwnerStuff <server.flag[Ownerof%ManageName%].to_titlecase||Gray>
                 - define OwnerStuffSecondary <server.flag[Ownerof%ManageName%Secondary].to_titlecase||Gray>
@@ -235,17 +291,35 @@ TeaOutpost_PlayerCommand:
                 - define LastDIBoostDate <player.flag[LastDIBoostDate]||00>
                 - define CurrentDate <util.date.time.year><util.date.time.month.replace[regex:^(?!..)].with[0]><util.date.time.day.replace[regex:^(?!..)].with[0]>
                 - define CurrentTime <util.date.time.hour><util.date.time.minute.replace[regex:^(?!..)].with[0]>
-                - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE BOARD<&co> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>" targets:<player>
-       # IF %MANAGENAME%INFLUENCELIST IS EMPTY, NARRATE "NONE"
+
+
+           # // Alright, from here on out, we're putting the menu into chat.
+                - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE<&co> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>" targets:<player>
+           # // If the Influence List is somehow empty, return "None"
                 - if <server.flag[%ManageName%InfluenceList].is_empty||true> {
                   - ^narrate "<gray>None" targets:<player>
                   }
-         # ELSE (%MANAGENAME%INFLUENCELIST IS NOT EMPTY) {
+           # // More realistically, it's time to build the menu!
                   else {
-           # IF (THE PLAYER HAS ALREADY USED HIS DAILY INFLUENCE BOOST) {
+
+           # // The two menu's that can be given to the player at this point are:
+           # // 1) The player has already used his Influence Boost
+           # // 2) The player has not yet used his Influence Boost
+           # (( Note from Tea: In this version, only (1) will calculate the expected Influence
+           # (( changes in the next 24 hours. I'll add that to (2) eventually!
+
+           # // We'll start with the "Already used Influence Boost" menu.
                     - if <def[LastDIBoostDate]> == <def[CurrentDate]> {
                       - narrate "<proc[msgHover].context[<gray> + <italic>Next Influence Boost in <el@24.sub[<util.date.time.hour>]> hours.| <gray>Influence Boosts are available daily ]>" targets:<player>
-             # FOREACH (LIST OF ALL OUTPOSTS IN TOWN, OR JUST THE OUTPOST NAME) {
+
+           # // At this point, we've found a single Outpost (Control Zone), either the one the
+           # // player is standing inside of, or the nearest one in town.
+           
+           # // We're going to need to know about any and all Control Zones that are related to the
+           # // one we found above.
+           # // Here, we define "NoonLightList" as a list of all the relevant Control Zones
+           # (( Note from Tea: "NoonLight" was the name of the original project for Outpost.
+           # (( NoonLights are what we now call Control Zones, the magic box you stand in.
                       - define NoonLightList <server.flag[%ManageName%OutpostList].as_list||li@%ManageName%>
                       - if <def[NoonLightList].size> == 1 {
                         - define ManageNameDisplay <server.flag[%ManageName%DisplayName]||The<&sp>Outpost>
@@ -253,155 +327,118 @@ TeaOutpost_PlayerCommand:
                         else {
                           - define ManageNameDisplay %ManageName%
                           }
-                    #  - define NoonLightOwnersList li@
                       - foreach <def[NoonLightList]> {
-               # ADD %VALUE% TO THE NOONLIGHTOWNERSLIST IN THE FORMAT OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE
+           # // We'll also make a list of all the owners of all the NoonLights in the list.
+               # ADD %VALUE% TO THE NOONLIGHTOWNERSLIST IN THE FORMAT OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE/%VALUE%LASTCAPTURETIME/%VALUE%
                         - if <def[NoonLightOwnersList]||null> == null {
                           - define NoonLightOwnersList li@<server.flag[Ownerof%value%]>/<server.flag[%value%LastCaptureDate]>/<server.flag[%value%LastCaptureTime]>/%value%
                           }
                           else {
                             - define NoonLightOwnersList <def[NoonLightOwnersList]>|<server.flag[Ownerof%value%]>/<server.flag[%value%LastCaptureDate]>/<server.flag[%value%LastCaptureTime]>/%value%
-
                             }
                         }
-               ###       - announce <def[NoonLightOwnersList]>
-               ###       - announce "<green><def[NoonLightOwnersList].get_sub_items[1]>"
+
+           # // This happens to be a convenient place to define each team's establish count as 0.
+           # (( Note from Tea: Yes, this can be inefficient when a Team is listed multiple times
+           # (( on NoonLightOwnersList. I might come back to this later.
                       - foreach <def[NoonLightOwnersList].get_sub_items[1].deduplicate> {
                         - define %value%EstablishCount 0
                         }
-             # FOREACH (%MANAGENAME%INFLUENCELIST) {
+
+
+
+           # // Alright, so there's two FOREACH's coming up. The first one is finding all the 
+           # // established control zones, for each team.
+           # // Later, we'll FOREACH again, narrating the menu to <player> and filling all the
+           # // definitions with the prepared calculations.
+
+           # // First up, calculations for each team!
                       - foreach <server.flag[%ManageName%InfluenceList].as_list> {
-                     #   - if %value% == <server.flag[Ownerof%ManageName%]> {
-                ###        - announce "<green>%value%"
                         - define InfluenceTeam %value%
-               # IF NOONLIGHTOWNERSLIST (OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE) CONTAINS %VALUE%
-               # (( IF THE INFLUENCE LIST VALUE CAN BE FOUND ON THE LIST OF OWNERS FOR THIS INFLUENCEPOST ))
-               # ((( IF A TEAM OWNS A CONTROL ZONE WITH THIS INFLUENCEPOST )))
+
+           # // If %InfluenceTeam% can be found on the list of owners (meaning that a control zone
+           # // is owned by %InfluenceTeam%), then we'll be calculating their anticipated gains
+           # // here.
+           # // As of right now, if the team does NOT own any control zones, there are no
+           # // calculations to be made.
                         - if <def[NoonLightOwnersList].get_sub_items[1].contains[%InfluenceTeam%]> {
+
+           # // Pull out all the Control Zones that are owned by %InfluenceTeam%, and call that
+           # // %RelevantValues%.
+           # // We're going to use that list, and check every Control Zone owned by %InfluenceTeam%
+           # // to see whether it's Established.
+           # (( The Establishment bonus is given to any Control Zone that has been controlled for
+           # (( more than 24 hours.
                           - define RelevantValuePositions <def[NoonLightOwnersList].as_list.find_all_partial[%InfluenceTeam%]>
-                ###          - announce "<green>Def: <def[RelevantValuePositions]>"
-                ###          - announce "<green>RelevantValues: <def[NoonLightOwnersList].get[%RelevantValuePositions%]>"
                           - define RelevantValues <def[NoonLightOwnersList].get[%RelevantValuePositions%]>
-         #                 - foreach <def[NoonLightOwnersList].get_sub_items[1]> {
-         #                   - define %value%EstablishCount 0
-         #                   }
                           - foreach <def[RelevantValues].as_list> {
                             - define CaptureTeam <def[value].as_list.get_sub_items[1].first>
                             - define CaptureDate <def[value].as_list.get_sub_items[2].first>
                             - define CaptureTime <def[value].as_list.get_sub_items[3].first>
-                         #   - announce "<gold>%CaptureDate% / %CurrentDate%"
-                   # IF OLDESTDATE IS NOT TODAY {
+
+           # // If <this control zone> was not captured TODAY...
                             - if <def[CurrentDate]> != <def[CaptureDate]> {
-                     # IF OLDESTDATE IS NOT YESTERDAY (MEANING IT'S AT LEAST THE DAY BEFORE YESTERDAY) {
-                       # DEFINE ESTABLISHMENTCHECK TRUE
+
+           # // If <this control zone> was not captured today as above, AND it wasn't captured
+           # // YESTERDAY either, then 24 hours have definitely passed. This control zone is
+           # // Established!
                               - if <def[CurrentDate]> != <def[CaptureDate].add[1]> {
                                 - define Established true
                                 - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
                                 }
-                       # ELSE IF OLDESTDATE IS YESTERDAY AAAAND OLDESTTIME HAS ALREADY BEEN PASSED (MEANING ITS BEEN AT LEAST 24 HOURS) {
-                         # DEFINE ESTABLISHMENTCHECK TRUE
+
+           # // If <this control zone> was not captured today as above, but it wasn't captured
+           # // before yesteday as above, if the capture time has already passed, then 24 hours
+           # // have passed! This control zone is Established!
                                 else if <def[CurrentDate]> == <def[CaptureDate].add[1]> && <def[CurrentTime]> >= <def[CaptureTime]> {
                                   - define Established true
                                   - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
                                   }
+
+           # // If <this control zone> was not captured today, and it wasn't captured before
+           # // yesterday, but the capture time has not yet passed, then it hasn't been 24 hours
+           # // yet. This control zone is not Established.
                                   else {
                                     - define Established false
                                   }
                               }
+
+           # // If <this control zone> was captured today, it is not Established.
                               else {
                                 - define Established false
                               }
-                  ###          - announce "<gold>%CaptureDate% / %CurrentDate% %established%"
-                       #     - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
                             }
-        #                  - foreach <def[NoonLightOwnersList].get_sub_items[1]> {
-        #                    - announce "<gold><def[%value%EstablishCount]>"
-        #                    }
-      #                    - announce "<yellow>RelevantDates <def[RelevantValues].as_list.get_sub_items[2].numerical>"
-      #                    - define RelevantDates <def[RelevantValues].as_list.get_sub_items[2].numerical>
-      #                    - announce "<yellow>OldestDate <def[RelevantDates].first>"
-      #                    - define OldestDate <def[RelevantDates].first>
-      #                    - announce "<yellow>OldestDatePosition: <def[RelevantValues].as_list.find_all_partial[%OldestDate%]>"
-      #                    - define OldestDatePositions <def[RelevantValues].as_list.find_all_partial[%OldestDate%]>
-      #                    - announce "<yellow>OldestOutposts: <def[RelevantValues].as_list.get[%OldestDatePositions%]>"
-      #                    - define OldestOutposts <def[RelevantValues].as_list.get[%OldestDatePositions%]>
-      #                    - announce "<yellow>OldestTime: <def[OldestOutposts].as_list.get_sub_items[3].numerical.first>"
-      #                    - define OldestTime <def[OldestOutposts].as_list.get_sub_items[3].numerical.first>
-      #                    - announce "<yellow>OldestOutpostFinalPosition: <def[RelevantValues].as_list.find_all_partial[%OldestDate%/%OldestTime%]>"
-      #                    - define OldestOutpostFinalPosition <def[RelevantValues].as_list.find_all_partial[%OldestDate%/%OldestTime%]>
-      #                    - announce "<yellow>OldestOutpostFinal: <def[RelevantValues].as_list.get[%OldestOutpostFinalPosition%]>"
-      #                    - announce ""
-        #         # IF OLDESTDATE IS NOT TODAY {
-        #                  - if <def[CurrentDate]> != <def[OldestDate]> {
-        #           # IF OLDESTDATE IS NOT YESTERDAY (MEANING IT'S AT LEAST THE DAY BEFORE YESTERDAY) {
-        #             # DEFINE ESTABLISHMENTCHECK TRUE
-        #                    - if <def[CurrentDate]> != <def[OldestDate].add[1]> {
-        #                      - define EstablishmentCheck true
-        #                      }
-        #             # ELSE IF OLDESTDATE IS YESTERDAY AAAAND OLDESTTIME HAS ALREADY BEEN PASSED (MEANING ITS BEEN AT LEAST 24 HOURS) {
-        #               # DEFINE ESTABLISHMENTCHECK TRUE
-        #                      else if <def[CurrentDate]> == <def[OldestDate].add[1]> && <def[CurrentTime]> >= <def[OldestTime]> {
-        #                        - define EstablishmentCheck true
-        #                        }
-        #                        else {
-        #                          - define EstablishmentCheck false
-        #                        }
-        #                    }
-        #                    else {
-        #                      - define EstablishmentCheck false
-        #                    }
-        #                  - announce "<yellow>%EstablishmentCheck%"
+           # (( Note to Tea: What's the point of "- define Established" again?
+           # (( It's only ever going to be defined as whatever the last Zone is...
+
+
+           # // Alright, so we've gone through all the control zones owned by %InfluenceTeam% now.
+           # // At this point, we've figured out how many established control zones there are
+           # // since we added [1] every time we find an established zone.
+           
+           # // These definitions will be called when we start narrating the Influence Menu to the
+           # // player.
                           - define NoonLightCountforTeam%InfluenceTeam% <def[RelevantValues].as_list.size>
                           - define NoonLightCountAgainstTeam%InfluenceTeam% <def[NoonLightOwnersList].size.sub[<def[NoonLightCountforTeam%InfluenceTeam%]>]>
-                  ###        - announce "<red>%InfluenceTeam% <def[NoonLightCountforTeam%InfluenceTeam%]> and <def[NoonLightCountAgainstTeam%InfluenceTeam%]>"
                           - define EstablishmentCount%InfluenceTeam% <server.flag[%InfluenceTeam%OutpostList].as_list.size||0>
-                  ###        - announce "<red><def[EstablishmentCount%InfluenceTeam%]>"
-                  ###        - announce "<red>List<server.flag[%InfluenceTeam%OutpostList].as_list>"
-
-
-            #              - if <def[CurrentDate]> != <def[OldestDate]> {
-            #                - if <def[CurrentDate]> != <def[OldestDate].add[1]> && <def[CurrentTime]> >= <def[OldestTime]> {
-            #                  - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) a+<server.flag[%value%OutpostList].as_list.size.add[1]||1> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb> <def[CurrentDate]> != <server.flag[%ManageName%LastCaptureDate]||0> && <def[CurrentTime]> >= <server.flag[%ManageName%LastCaptureTime]||0>"
-            #                  }
-            #                }
-          #                  else {
-          #                    - define NoonLightCountforTeam <def[NoonLightOwnersList].count[%value%]>
-          #                    - define NoonLightCountAgainstTeam <def[NoonLightOwnersList].size.sub[<def[NoonLightCountforTeam]>]>
-          #                    - define NetGainforTeam <def[NoonLightCountforTeam].sub[<def[NoonLightCountAgainstTeam]>].abs>
-          #                    - if <def[NoonLightCountAgainstTeam]> > <def[NoonLightCountforTeam]> {
-          #                      - define NetGainforTeam -<def[NetGainforTeam].round>
-          #                      }
-          #                      else {
-          #                      - define NetGainforTeam +<def[NetGainforTeam].round>
-          #                        }
-          #                    - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) <def[NetGainforTeam]> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
-          #                    }
-                #          - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) +<def[NoonLightCountforTeam]||0> -<def[NoonLightCountAgainstTeam]> +<def[EstablishmentCount]> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
-#should be adjusted to establishmentcount x number of established 'posts
-                #          - foreach <def[NoonLightOwnersList].get_sub_items[1].deduplicate> {
-                #            - announce "<gold><def[%value%EstablishCount]> %value%"
-                #            }
                           }
-                # ELSE (THE TEAM DOES NOT OWN ANY CONTROL ZONES AT THIS INFLUENCE POST)
-                #          else {
-                #            - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) -<def[NoonLightOwnersList].size> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
-                #            }
                         }
-              ###        - foreach <def[NoonLightOwnersList].get_sub_items[1].deduplicate> {
-              ###          - announce "<aqua>%value%: Est(<def[%value%EstablishCount]>x<def[EstablishmentCount%value%]>= <def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>]>) CountFor(+<def[NoonLightCountforTeam%value%]>) CountAgainst(-<def[NoonLightCountAgainstTeam%value%]>) = <def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>].add[<def[NoonLightCountforTeam%value%]>].sub[<def[NoonLightCountAgainstTeam%value%]>]>"
-              ###         # - announce "<aqua>%value%: Est() CountFor(+<def[NoonLightCountforTeam%value%]>) CountAgainst(-<def[NoonLightCountAgainstTeam%value%]>) "
-              ###          }
-                        
-#==============================================================================================================
-                        
-             # FOREACH (%MANAGENAME%INFLUENCELIST) {
+
+           # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+
+           # // Okay, here's the second foreach.
+           # // We have a couple calculations for each team, and then we'll be narrating a single
+           # // very fancy line into the player's menu (for each team).
+
                       - foreach <server.flag[%ManageName%InfluenceList].as_list> {
-                     #   - if %value% == <server.flag[Ownerof%ManageName%]> {
-                      #  - announce "<light_purple>%value%"
-               # IF NOONLIGHTOWNERSLIST (OWNEROF%VALUE%/%VALUE%LASTCAPTUREDATE) CONTAINS %VALUE%
-               # (( IF THE INFLUENCE LIST VALUE CAN BE FOUND ON THE LIST OF OWNERS FOR THIS INFLUENCEPOST ))
-               # ((( IF A TEAM OWNS A CONTROL ZONE WITH THIS INFLUENCEPOST )))
+
+           # // So there's basically two options for each team on the Influence List:
+           # // 1) The team does own a control zone at this Outpost/Group of Outposts
+           # // 2) The team does NOT own a control zone at this Outpost.
+
+           # // If a team DOES own a control zone at this Outpost...
                         - if <def[NoonLightOwnersList].get_sub_items[1].contains[%value%]> {
+           # // then we have a couple calculations to do...
                           - define NetInfluence <def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>].add[<def[NoonLightCountforTeam%value%]>].sub[<def[NoonLightCountAgainstTeam%value%]>]>
                           - if <def[NetInfluence]> >= 0 {
                             - define NetInfluenceDisplay +<def[NetInfluence]>
@@ -414,6 +451,7 @@ TeaOutpost_PlayerCommand:
                               - define NetInfluenceWord lose
                             }
                           - if <def[NoonLightCountforTeam]> > 0 {
+           # (( Note to Tea: Can these 4 define comments be deleted? Do we still need them?
                            # - define NetInfluenceDisplay +<def[NetInfluence]>
                             - define NLCFTColour green
                            # - define NetInfluenceWord gain
@@ -423,12 +461,18 @@ TeaOutpost_PlayerCommand:
                               - define NLCFTColour dark_red
                             #  - define NetInfluenceWord lose
                             }
+           # // And here's where all the formatting happens.
                           - define HoverLine1 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp>(<def[value].replace[_].with[<&sp>]>)<&sp><&sp><&sp>-<&sp><&sp><&sp><server.flag[%ManageName%InfluencePoints%value%].first.round><&sp>Influence<&sp>Points
                           - define HoverLine2 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><gold><&sp>will<&sp><def[NetInfluenceWord]><&sp><%NetInfluenceColour%><def[NetInfluenceDisplay]><gold><&sp>IP<&sp>every<&sp>Minecraft<&sp>day.
                           - define HoverLine3 <%NLCFTColour%><&sp><&sp>+<def[NoonLightCountforTeam%value%]><&sp><gold><&co><&sp><%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp><gold>has<&sp><red>captured<&sp><%NLCFTColour%><def[NoonLightCountforTeam%value%]><&sp><gold>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
                           - define HoverLineEst1 <green><&sp><&sp>+<def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>]><&sp><gold><&co><&sp><%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp><gold>has<&sp><dark_green>established<&sp><%NLCFTColour%><def[%value%EstablishCount]><&sp><gold>of<&sp>its<&sp><gold>Control<&sp>Zones<&sp>
                           - define HoverLineEst2 <green><&sp><&sp><&sp><&sp><&sp><&sp><gold><&co><&sp>Every<&sp>Established<&sp>Control<&sp>Zone<&sp>is<&sp>granting<&sp><green>+<def[EstablishmentCount%value%]><&sp><gold>IP
-                          - define HoverLine4 <dark_red><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><dark_red><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                          - if <def[NoonLightCountAgainstTeam%value%]> == 0 {
+                            - define HoverLine4 <green><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><green><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                            }
+                            else {
+                              - define HoverLine4 <dark_red><&sp><&sp>-<def[NoonLightCountAgainstTeam%value%]><&sp><gold><&co><&sp><gold>There<&sp>are<&sp><dark_red><def[NoonLightCountAgainstTeam%value%]><&sp><gold>Enemy<&sp>Control<&sp>Zones<&sp>at<&sp><def[ManageNameDisplay]>
+                              }
                           - define HoverLine5 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><gold><&sp>is<&sp>estimated<&sp>to<&sp><def[NetInfluenceWord]><&sp><%NetInfluenceColour%><def[NetInfluence].mul[72].abs.round><gold><&sp>IP<&sp>every<&sp>24<&sp>hours.
                           - if <def[%value%EstablishCount]> > 0 {
                             - define HoverText <def[HoverLine1]><&nl><&nl><def[HoverLine2]><&nl><&nl><def[HoverLine3]><&nl><def[HoverLineEst1]><&nl><def[HoverLineEst2]><&nl><&nl><def[HoverLine4]><&nl><&nl><def[HoverLine5]>
@@ -436,118 +480,16 @@ TeaOutpost_PlayerCommand:
                             else {
                               - define HoverText <def[HoverLine1]><&nl><&nl><def[HoverLine2]><&nl><&nl><def[HoverLine3]><&nl><&nl><def[HoverLine4]><&nl><&nl><def[HoverLine5]>
                               }
-                         ### - announce "<aqua>%value%: Est(<def[%value%EstablishCount]>x<def[EstablishmentCount%value%]>= <def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>]>) CountFor(+<def[NoonLightCountforTeam%value%]>) CountAgainst(-<def[NoonLightCountAgainstTeam%value%]>) = <def[%value%EstablishCount].mul[<def[EstablishmentCount%value%]>].add[<def[NoonLightCountforTeam%value%]>].sub[<def[NoonLightCountAgainstTeam%value%]>]>"
+           # // Finally, here's the narrate, with all the formatting, all the calculations, and the
+           # // Influence info for each team. We're done here for this section!
                           - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]><proc[msgHover].context[<%value%>) <def[NetInfluenceDisplay]> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>|<def[HoverText]>]>"
-
-#                          - announce "<def[NoonLightOwnersList].get_sub_items[1]>"
-#                          - define RelevantValuePositions <def[NoonLightOwnersList].as_list.find_all_partial[%value%]>
-#                          - announce "Def: <def[RelevantValuePositions]>"
-#                          - announce "RelevantValues<def[NoonLightOwnersList].get[%RelevantValuePositions%]>"
-#                          - define RelevantValues <def[NoonLightOwnersList].get[%RelevantValuePositions%]>
-#         #                 - foreach <def[NoonLightOwnersList].get_sub_items[1]> {
-#         #                   - define %value%EstablishCount 0
-#         #                   }
-#                          - foreach <def[RelevantValues].as_list> {
-#                            - define CaptureTeam <def[value].as_list.get_sub_items[1].first>
-#                            - define CaptureDate <def[value].as_list.get_sub_items[2].first>
-#                            - define CaptureTime <def[value].as_list.get_sub_items[3].first>
-#                         #   - announce "<gold>%CaptureDate% / %CurrentDate%"
-#                   # IF OLDESTDATE IS NOT TODAY {
-#                            - if <def[CurrentDate]> != <def[CaptureDate]> {
-#                     # IF OLDESTDATE IS NOT YESTERDAY (MEANING IT'S AT LEAST THE DAY BEFORE YESTERDAY) {
-#                       # DEFINE ESTABLISHMENTCHECK TRUE
-#                              - if <def[CurrentDate]> != <def[CaptureDate].add[1]> {
-#                                - define Established true
-#                                - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
-#                                }
-#                       # ELSE IF OLDESTDATE IS YESTERDAY AAAAND OLDESTTIME HAS ALREADY BEEN PASSED (MEANING ITS BEEN AT LEAST 24 HOURS) {
-#                         # DEFINE ESTABLISHMENTCHECK TRUE
-#                                else if <def[CurrentDate]> == <def[CaptureDate].add[1]> && <def[CurrentTime]> >= <def[CaptureTime]> {
-#                                  - define Established true
-#                                  - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
-#                                  }
-#                                  else {
-#                                    - define Established false
-#                                  }
-#                              }
-#                              else {
-#                                - define Established false
-#                              }
-#                            - announce "<gold>%CaptureDate% / %CurrentDate% %established%"
-#                       #     - define %CaptureTeam%EstablishCount <def[%CaptureTeam%EstablishCount].add[1]>
-#                            }
-#        #                  - foreach <def[NoonLightOwnersList].get_sub_items[1]> {
-#        #                    - announce "<gold><def[%value%EstablishCount]>"
-#        #                    }
-#                          - announce "RelevantDates <def[RelevantValues].as_list.get_sub_items[2].numerical>"
-#                          - define RelevantDates <def[RelevantValues].as_list.get_sub_items[2].numerical>
-#                          - announce "OldestDate <def[RelevantDates].first>"
-#                          - define OldestDate <def[RelevantDates].first>
-#                          - announce "OldestDatePosition: <def[RelevantValues].as_list.find_all_partial[%OldestDate%]>"
-#                          - define OldestDatePositions <def[RelevantValues].as_list.find_all_partial[%OldestDate%]>
-#                          - announce "OldestOutposts: <def[RelevantValues].as_list.get[%OldestDatePositions%]>"
-#                          - define OldestOutposts <def[RelevantValues].as_list.get[%OldestDatePositions%]>
-#                          - announce "OldestTime: <def[OldestOutposts].as_list.get_sub_items[3].numerical.first>"
-#                          - define OldestTime <def[OldestOutposts].as_list.get_sub_items[3].numerical.first>
-#                          - announce "OldestOutpostFinalPosition: <def[RelevantValues].as_list.find_all_partial[%OldestDate%/%OldestTime%]>"
-#                          - define OldestOutpostFinalPosition <def[RelevantValues].as_list.find_all_partial[%OldestDate%/%OldestTime%]>
-#                          - announce "OldestOutpostFinal: <def[RelevantValues].as_list.get[%OldestOutpostFinalPosition%]>"
-#                          - announce ""
-#                 # IF OLDESTDATE IS NOT TODAY {
-#                          - if <def[CurrentDate]> != <def[OldestDate]> {
-#                   # IF OLDESTDATE IS NOT YESTERDAY (MEANING IT'S AT LEAST THE DAY BEFORE YESTERDAY) {
-#                     # DEFINE ESTABLISHMENTCHECK TRUE
-#                            - if <def[CurrentDate]> != <def[OldestDate].add[1]> {
-#                              - define EstablishmentCheck true
-#                              }
-#                     # ELSE IF OLDESTDATE IS YESTERDAY AAAAND OLDESTTIME HAS ALREADY BEEN PASSED (MEANING ITS BEEN AT LEAST 24 HOURS) {
-#                       # DEFINE ESTABLISHMENTCHECK TRUE
-#                              else if <def[CurrentDate]> == <def[OldestDate].add[1]> && <def[CurrentTime]> >= <def[OldestTime]> {
-#                                - define EstablishmentCheck true
-#                                }
-#                                else {
-#                                  - define EstablishmentCheck false
-#                                }
-#                            }
-#                            else {
-#                              - define EstablishmentCheck false
-#                            }
-#                          - announce "<red>%EstablishmentCheck%"
-#                          - define NoonLightCountforTeam <def[RelevantValues].as_list.size>
-#                          - define NoonLightCountAgainstTeam <def[NoonLightOwnersList].size.sub[<def[NoonLightCountforTeam]>]>
-#                          - announce "<red>%NoonLightCountforTeam% and %NoonLightCountAgainstTeam%"
-#                          - define EstablishmentCount <server.flag[%value%OutpostList].as_list.size||0>
-#                          - announce "<red>%EstablishmentCount%"
-#                          - announce "<red><server.flag[%value%OutpostList].as_list>"
-#
-#
-#            #              - if <def[CurrentDate]> != <def[OldestDate]> {
-#            #                - if <def[CurrentDate]> != <def[OldestDate].add[1]> && <def[CurrentTime]> >= <def[OldestTime]> {
-#            #                  - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) a+<server.flag[%value%OutpostList].as_list.size.add[1]||1> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb> <def[CurrentDate]> != <server.flag[%ManageName%LastCaptureDate]||0> && <def[CurrentTime]> >= <server.flag[%ManageName%LastCaptureTime]||0>"
-#            #                  }
-#            #                }
-#          #                  else {
-#          #                    - define NoonLightCountforTeam <def[NoonLightOwnersList].count[%value%]>
-#          #                    - define NoonLightCountAgainstTeam <def[NoonLightOwnersList].size.sub[<def[NoonLightCountforTeam]>]>
-#          #                    - define NetGainforTeam <def[NoonLightCountforTeam].sub[<def[NoonLightCountAgainstTeam]>].abs>
-#          #                    - if <def[NoonLightCountAgainstTeam]> > <def[NoonLightCountforTeam]> {
-#          #                      - define NetGainforTeam -<def[NetGainforTeam].round>
-#          #                      }
-#          #                      else {
-#          #                      - define NetGainforTeam +<def[NetGainforTeam].round>
-#          #                        }
-#          #                    - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) <def[NetGainforTeam]> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
-#          #                    }
-#                          - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) +<def[NoonLightCountforTeam]||0> -<def[NoonLightCountAgainstTeam]> +<def[EstablishmentCount]> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
-##should be adjusted to establishmentcount x number of established 'posts
-#                          - foreach <def[NoonLightOwnersList].get_sub_items[1].deduplicate> {
-#                            - announce "<gold><def[%value%EstablishCount]> %value%"
-#                            }
                           }
                           
                           
-                          
-                # ELSE (THE TEAM DOES NOT OWN ANY CONTROL ZONES AT THIS INFLUENCE POST)
+           # // If the team does NOT own any control zone at this Outpost/Group of Outposts...
+           # // Then we'll prep that formatting, and we're just gonna do the calculations directly
+           # // in there instead.
+           # // Then we narrate it into the menu, and we're done here!
                           else {
                             - define HoverLine1 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&sp>(<def[value].replace[_].with[<&sp>]>)<&sp><&sp><&sp>-<&sp><&sp><&sp><server.flag[%ManageName%InfluencePoints%value%].first.round><&sp>Influence<&sp>Points
                             - define HoverLine2 <%value%><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><gold><&sp>will<&sp>lose<&sp><dark_red><def[NoonLightOwnersList].size><gold><&sp>IP<&sp>every<&sp>Minecraft<&sp>day.
@@ -558,9 +500,15 @@ TeaOutpost_PlayerCommand:
                             - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]><proc[msgHover].context[<%value%>) -<def[NoonLightOwnersList].size> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>|<def[HoverText]>]>"
                             }
                         }
-#=======================================================================
                       }
-             # ELSE (THE PLAYER HAS NOT YET USED HIS DAILY INFLUENCE BOOST) {
+
+           # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+           # ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
+
+           # // If the player has not yet used his daily influence boost, then just show him
+           # // a basic menu with his boost options.
+           # (( Note to Tea: One day, come back to this and add all the calculations we do above.
+           # (( Players might want to know the outlook before they pick a boost.
                       else {
                         - narrate "<proc[msgHover].context[<aqua> + <italic>Influence Boost available!| <aqua>Influence Boosts are available daily ]>" targets:<player>
                         - if !<server.flag[%ManageName%InfluenceList].contains[<player.flag[RaceColour]>]||false> {
@@ -571,16 +519,23 @@ TeaOutpost_PlayerCommand:
                           - narrate "<%value%><&lb><server.flag[%ManageName%InfluencePoints%value%].first.round.replace[regex:^(?!..)].with[0].replace[regex:^(?!...)].with[0]||0><&rb> <proc[msgCommand].context[<&lt>-|outpost boost subtract %ManageName% %value%|outpost boost subtract %ManageName% %value%]><%value%> (<proc[TeaOutpost_InfluenceBars].context[<server.flag[%ManageName%InfluencePoints%value%]||0>|<server.flag[%ManageName%MaxInfluence]||1000>]>) <proc[msgCommand].context[+<&gt>|outpost boost add %ManageName% %value%|outpost boost add %ManageName% %value%]><%value%> <&lb><server.flag[%value%DisplayNameTag]||<server.flag[%value%DisplayName].first.replace[_].with[<&sp>]||Wild>><&rb>"
                           }
                         }
-
-
                     }
                 - ^narrate "<proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost here|<gold> <&lt><&lt> Back to Outpost Here ]>" targets:<player>
-
+                - ^narrate "" targets:<player>
                 }
             }
+
+           # // If TeaOutpostList does NOT contain any of the cuboids found at <player>'s location,
+           # // and the player is NOT in a town, then give the player the "sorry" message, and
+           # // we're done here.
             else {
               - ^narrate "<dark_red><&lb>OUTPOST<&rb> Sorry, no Outpost here! <proc[msgCommand].context[<gold><&gt> View Outpost List?|outpost list|<gold>This will show you a list of all Outposts.]>" targets:<player>
               }
+
+
+
+
+
    ## BOOST ---
         - case boost:
           - define Confirmation <context.args.get[5]||No>
@@ -625,7 +580,8 @@ TeaOutpost_PlayerCommand:
           - ^narrate "<proc[msgUrl].context[<gold> <&gt> Outpost Discussion Thread|www.rcommunitymc.com/forum/page/1/m/37643997/viewthread/28779448-outpost-by-tea-discussion|<gold> <&gt> Click to open <white>Outpost Discussion Thread<gold> link ]>" targets:<player>
         #  - ^narrate "" targets:<player>
           - ^narrate "<proc[msgUrl].context[<yellow> <&gt> Public Development Trello|trello.com/b/GR1p8CAR/public-development|<yellow> <&gt> Click to open <white>Public Development Trello<yellow> link ]>" targets:<player>
-        #  - ^narrate "" targets:<player>
+          - ^narrate "<proc[msgUrl].context[<gold> <&gt> Outpost GitHub|github.com/teateatea/Outpost|<gold> <&gt> Click to open <white>Outpost GitHub<gold> link ]>" targets:<player>
+          - ^narrate "" targets:<player>
           - ^narrate "<dark_aqua><proc[msgCommand].context[<gold><&lt><&lt> BACK|outpost|<gold> <&lt><&lt> Back to Outpost Menu ]>" targets:<player>
           - ^narrate "" targets:<player>
 

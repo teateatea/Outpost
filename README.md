@@ -15,5 +15,5 @@ Requirements:
 - VirtualPlayers plugin (https://dev.bukkit.org/projects/virtualplayers2)
 
 Installation:
-- Put all .yml files into the .../plugins/Denizen/scripts folder
+- Put all Outpost .yml files into the .../plugins/Denizen/scripts folder
 - Reload denizen scripts
