@@ -47,7 +47,7 @@ TeaOutpost_PlayerCommand:
    # default
    # ----- ----- ----- ----- ----- 
     type: command
-    debug: false
+    debug: true
     name: outpost
     description: Outpost by Tea
     usage: /outpost
@@ -277,9 +277,11 @@ TeaOutpost_PlayerCommand:
            # // Define %ManageName% as either that town, or just the Outpost itself.
                 - if <server.flag[%Cuboidname%TownName]||null> != null {
                   - define ManageName <server.flag[%CuboidName%TownName]>
+                  - define MenuName <def[ManageName].to_uppercase>
                   }
                   else {
                     - define ManageName %CuboidName%
+                    - define MenuName <server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>
                     }
 
            # // Prep a bunch of definitions here. Names, colours, and times.
@@ -294,7 +296,7 @@ TeaOutpost_PlayerCommand:
 
 
            # // Alright, from here on out, we're putting the menu into chat.
-                - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE<&co> <%TownOwnerStuff%><bold><server.flag[%ManageName%DisplayName].to_uppercase||THE<&sp>OUTPOST>" targets:<player>
+                - ^narrate "<gold><bold><&lb>OUTPOST<&rb> INFLUENCE<&co> <%TownOwnerStuff%><bold><def[MenuName]>" targets:<player>
            # // If the Influence List is somehow empty, return "None"
                 - if <server.flag[%ManageName%InfluenceList].is_empty||true> {
                   - ^narrate "<gray>None" targets:<player>
@@ -450,7 +452,7 @@ TeaOutpost_PlayerCommand:
                               - define NetInfluenceColour dark_red
                               - define NetInfluenceWord lose
                             }
-                          - if <def[NoonLightCountforTeam]> > 0 {
+                          - if <def[NoonLightCountforTeam]||0> > 0 {
            # (( Note to Tea: Can these 4 define comments be deleted? Do we still need them?
                            # - define NetInfluenceDisplay +<def[NetInfluence]>
                             - define NLCFTColour green

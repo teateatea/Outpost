@@ -840,21 +840,46 @@ TeaOutpost_TrainingCuboidCheck:
   #  - if <server.flag[%CuboidTime%Training]||false> {
   #    - announce "you can train"
   #  }
+
+  
+           # // Alright, so here's the Influence Task.
+           # // This is the where we adjust all the numbers. For Tea's sake, we're going to go
+           # // through this and review what we're working with to begin with.
+
+           # // Later, we're gonna overhaul this using the improved code from the /outpost
+           # // influence command that we recently put together.
+
+           # // This task runs from TrainingCuboidCheck, above.
+           # // It'll run for every single Outpost on TeaOutpostList, where TrainingTime matches
+           # // <def[1]> (Dawn, Noon, Dusk, or Midnight).
 TeaOutpost_TownInfluenceTask:
   type: task
-  debug: false
+  debug: true
   script:
+           # // We check whether the Outpost is part of a Town.
+           # // We're using either the Town name, or the Outpost name, as %InfluenceID%
+
+           # // %InfluenceID% will be used to find the appropriate InfluenceList in the foreach
+           # // below.
     - if <server.flag[%Cuboidname%TownName]||null> != null {
       - define InfluenceID <server.flag[%CuboidName%TownName]>
       }
       else {
         - define InfluenceID %CuboidName%
-     #   - announce "<player.name> found ManageName %ManageName%" to_flagged:DreamListener
         }
+           # // Just in case, we're rename %CuboidName% as %OutpostID%
+           # (( Note to Tea: Is this renaming actually necessary?
     - define OutpostID %CuboidName%
     - define CurrentOwner <server.flag[Ownerof%OutpostID%]||Gray>
     - announce "<gray><bold>Influence Task: <gray><def[1]> for %OutpostID%/%InfluenceID%" to_flagged:DreamListener
+
+           # // Okay, so we got this Foreach, on the Influence List...
     - foreach <server.flag[%InfluenceID%InfluenceList].as_list||li@> {
+           # // and we're dividing this into "Outpost Owner" vs "Not outpost owner"
+           # (( Note to Tea: Will this work for towns?
+           # (( Note from Tea: I... think so.
+
+           # // If this team (%value%) is OutpostID's Owner (%CurrentOwner%)...
       - if %CurrentOwner% == %value% {
        # - define CurrentIP <server.flag[%OutpostID%InfluencePoints%value%]||0>
         - define CurrentIP <server.flag[%InfluenceID%InfluencePoints%value%]||0>
@@ -871,10 +896,27 @@ TeaOutpost_TownInfluenceTask:
         - announce "%value%Add<server.flag[%InfluenceID%InfluencePoints%value%]||00>" to_flagged:DreamListener
         
         }
+           # // If %value% is NOT OutpostID's Owner (%CurrentOwner%)...
         else {
+           # // then we take that Team's Influence Points and subtract 1.
+           # // If it's now less than 0, then we'll remove that Team from the List so it doesn't
+           # // show up again next time.
+
+           # (( Note to Tea: This does not account for enemy Established Control Zones.
+           # (( Should the Establishment boost reduce enemy influence as well as boost
+           # (( ally influence?
+           # (( Note from Tea: I think not. As it is right now, Establishment Bonus grants
+           # (( <# of global CZ> x <# of local CZ>. If we allow it to affect enemies, it'll grant
+           # (( (<# of global CZ> x <# of local CZ>) + (<# of global CZ> x <# of enemy teams) of
+           # (( net gain in Influence Points.
+           # (( Establishment Bonus MUST be growth for your team only. We can allow it to affect
+           # (( enemies as a way to drastically buff the bonus, and encourage daily capturing or
+           # (( frequent owner swaps or reduce owner stability.
           - define CurrentIP <server.flag[%InfluenceID%InfluencePoints%value%]||0>
           - flag server %InfluenceID%InfluencePoints%value%:<def[CurrentIP].sub[1]>
           - announce "%value%subtract<server.flag[%InfluenceID%InfluencePoints%value%]||00>" to_flagged:DreamListener
+           # // NOTE TO TEA: THIS IS NOT A GOOD PLACE. IF A TEAM GETS BELOW ZERO BEFORE THEY GET
+           # // THEIR OWN GROWTH, THEY WILL NEVER GET THE GROWTH.
           - if <server.flag[%InfluenceID%InfluencePoints%value%]||0> < 0 {
             - flag server %InfluenceID%InfluencePoints%value%:0
             - flag server %InfluenceID%InfluenceList:<-:%value%
