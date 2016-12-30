@@ -806,6 +806,19 @@ TeaOutpost_SingleTrainingCuboidCheck:
         - inject TeaOutpost_CuboidCheckTrainer
         }
       }
+TeaOutpost_MidnightInfluenceTask:
+  type: task
+  debug: false
+  script:
+    - foreach <server.flag[TeaOutpostList].as_list> {
+      - define CuboidName <%value%.replace[cu@].with[]>
+      - inject TeaOutpost_TownInfluenceTask
+      }
+    - foreach <server.flag[TeaOutpostList].as_list> {
+      - define CuboidName <%value%.replace[cu@].with[]>
+      - inject TeaOutpost_HighestInfluenceChooserTask
+      }
+   # - flag server TrainingCuboidCheckIsActive:false
 
 TeaOutpost_TrainingCuboidCheck:
   type: task
